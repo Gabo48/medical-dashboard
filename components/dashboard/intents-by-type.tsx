@@ -17,7 +17,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Cell
+  Cell,
+  Legend
 } from "recharts"
 import type { PatientIntentData } from "@/lib/mock-data"
 import { MessageCircle } from "lucide-react"
@@ -29,22 +30,22 @@ interface IntentsByTypeProps {
 }
 
 const intentColors: Record<string, string> = {
-  report_adherence: "hsl(var(--success))",
-  report_non_adherence: "hsl(var(--destructive))",
-  report_symptom: "hsl(var(--warning))",
-  negative_emotion: "hsl(var(--chart-4))",
-  positive_emotion: "hsl(var(--chart-2))",
-  show_resistance: "hsl(var(--destructive))",
-  request_help: "hsl(var(--primary))",
-  express_doubt: "hsl(var(--chart-3))",
-  confirm: "hsl(var(--success))",
-  partial_response: "hsl(var(--muted-foreground))"
+  report_adherence: "var(--success)",
+  report_non_adherence: "var(--destructive)",
+  report_symptom: "var(--warning)",
+  negative_emotion: "var(--chart-4)",
+  positive_emotion: "var(--chart-mood)",
+  show_resistance: "var(--destructive)",
+  request_help: "var(--chart-adherence)",
+  express_doubt: "var(--chart-motivation)",
+  confirm: "var(--success)",
+  partial_response: "var(--chart-grid)"
 }
 
 export function IntentsByType({ data, totalMessages }: IntentsByTypeProps) {
   if (data.length === 0) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-muted-foreground" />
@@ -61,7 +62,7 @@ export function IntentsByType({ data, totalMessages }: IntentsByTypeProps) {
   }
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
           <MessageCircle className="h-4 w-4 text-muted-foreground" />
@@ -80,36 +81,46 @@ export function IntentsByType({ data, totalMessages }: IntentsByTypeProps) {
               layout="vertical" 
               margin={{ top: 5, right: 30, left: 120, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={true} vertical={false} />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="var(--chart-grid)" 
+                strokeOpacity={0.3}
+                horizontal={true} 
+                vertical={true} 
+              />
               <XAxis 
                 type="number" 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} 
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }} 
                 axisLine={false} 
                 tickLine={false}
               />
               <YAxis 
                 dataKey="label" 
                 type="category" 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} 
+                tick={{ fill: "var(--chart-grid)", fontSize: 10 }} 
                 axisLine={false} 
                 tickLine={false}
                 width={115}
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
-                  color: "hsl(var(--foreground))"
+                  color: "var(--foreground)"
                 }}
                 formatter={(value: number, name: string, props: { payload: PatientIntentData }) => [
                   `${value} mensajes (${props.payload.percentage}%)`, 
                   "Cantidad"
                 ]}
               />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+              <Legend 
+                wrapperStyle={{ paddingTop: "10px" }}
+                formatter={(value) => <span style={{ color: "var(--foreground)", fontSize: "12px" }}>{value}</span>}
+              />
+              <Bar dataKey="count" name="Mensajes" radius={[0, 4, 4, 0]}>
                 {data.map((entry) => (
-                  <Cell key={entry.intent} fill={intentColors[entry.intent] || "hsl(var(--primary))"} />
+                  <Cell key={entry.intent} fill={intentColors[entry.intent] || "var(--primary)"} />
                 ))}
               </Bar>
             </BarChart>
@@ -117,7 +128,7 @@ export function IntentsByType({ data, totalMessages }: IntentsByTypeProps) {
         </div>
 
         {/* Data Table */}
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="rounded-lg border border-border overflow-hidden bg-card">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/30">
@@ -133,7 +144,7 @@ export function IntentsByType({ data, totalMessages }: IntentsByTypeProps) {
                     <div className="flex items-center gap-2">
                       <span 
                         className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: intentColors[item.intent] || "hsl(var(--primary))" }}
+                        style={{ backgroundColor: intentColors[item.intent] || "var(--primary)" }}
                       />
                       <span className="text-sm text-foreground">{item.label}</span>
                     </div>

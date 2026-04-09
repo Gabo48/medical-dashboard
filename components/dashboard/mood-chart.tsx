@@ -20,7 +20,7 @@ interface MoodChartProps {
 
 export function MoodChart({ data, title = "Ánimo y Motivación" }: MoodChartProps) {
   return (
-    <Card className="bg-card border-border">
+    <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
       </CardHeader>
@@ -28,15 +28,20 @@ export function MoodChart({ data, title = "Ánimo y Motivación" }: MoodChartPro
         <div className="h-[200px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="var(--chart-grid)" 
+                strokeOpacity={0.3}
+                vertical={true} 
+              />
               <XAxis 
                 dataKey="date" 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                axisLine={{ stroke: "hsl(var(--border))" }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
+                axisLine={{ stroke: "var(--chart-grid)", strokeOpacity: 0.5 }}
                 tickLine={false}
               />
               <YAxis 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 domain={[1, 5]}
@@ -44,33 +49,35 @@ export function MoodChart({ data, title = "Ánimo y Motivación" }: MoodChartPro
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
-                  color: "hsl(var(--foreground))"
+                  color: "var(--foreground)"
                 }}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
+                labelStyle={{ color: "var(--foreground)" }}
                 formatter={(value: number) => [value.toFixed(1), ""]}
               />
               <Legend 
                 wrapperStyle={{ paddingTop: "10px" }}
-                formatter={(value) => <span style={{ color: "hsl(var(--muted-foreground))", fontSize: "12px" }}>{value}</span>}
+                formatter={(value) => <span style={{ color: "var(--foreground)", fontSize: "12px" }}>{value}</span>}
               />
               <Line 
                 type="monotone" 
                 dataKey="mood" 
                 name="Ánimo"
-                stroke="hsl(var(--chart-3))" 
+                stroke="var(--chart-mood)" 
                 strokeWidth={2}
-                dot={false}
+                dot={{ fill: "var(--chart-mood)", strokeWidth: 0, r: 3 }}
+                activeDot={{ r: 5, fill: "var(--chart-mood)" }}
               />
               <Line 
                 type="monotone" 
                 dataKey="motivation" 
                 name="Motivación"
-                stroke="hsl(var(--chart-2))" 
+                stroke="var(--chart-motivation)" 
                 strokeWidth={2}
-                dot={false}
+                dot={{ fill: "var(--chart-motivation)", strokeWidth: 0, r: 3 }}
+                activeDot={{ r: 5, fill: "var(--chart-motivation)" }}
               />
             </LineChart>
           </ResponsiveContainer>

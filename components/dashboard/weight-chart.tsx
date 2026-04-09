@@ -10,8 +10,7 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Legend,
-  ReferenceLine
+  Legend
 } from "recharts"
 import type { WeightHistory } from "@/lib/mock-data"
 import { TrendingDown, TrendingUp, Minus } from "lucide-react"
@@ -67,8 +66,11 @@ export function WeightChart({ data, title = "Evolución de Peso e IMC" }: Weight
   const trendLabel = bmiTrend.direction === "improving" ? "Mejorando" : 
                      bmiTrend.direction === "deteriorating" ? "Deteriorando" : "Estable"
 
+  const trendLineColor = bmiTrend.direction === "improving" ? "var(--success)" : 
+                         bmiTrend.direction === "deteriorating" ? "var(--destructive)" : "var(--chart-grid)"
+
   return (
-    <Card className="bg-card border-border">
+    <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
@@ -89,70 +91,74 @@ export function WeightChart({ data, title = "Evolución de Peso e IMC" }: Weight
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={trendLineData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="var(--chart-grid)" 
+                strokeOpacity={0.3}
+                vertical={true} 
+              />
               <XAxis 
                 dataKey="date" 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                axisLine={{ stroke: "hsl(var(--border))" }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
+                axisLine={{ stroke: "var(--chart-grid)", strokeOpacity: 0.5 }}
                 tickLine={false}
               />
               <YAxis 
                 yAxisId="left"
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 domain={['dataMin - 5', 'dataMax + 5']}
-                label={{ value: 'Peso (kg)', angle: -90, position: 'insideLeft', fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                label={{ value: 'Peso (kg)', angle: -90, position: 'insideLeft', fill: "var(--chart-grid)", fontSize: 10 }}
               />
               <YAxis 
                 yAxisId="right"
                 orientation="right"
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 domain={['dataMin - 2', 'dataMax + 2']}
-                label={{ value: 'IMC', angle: 90, position: 'insideRight', fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+                label={{ value: 'IMC', angle: 90, position: 'insideRight', fill: "var(--chart-grid)", fontSize: 10 }}
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
-                  color: "hsl(var(--foreground))"
+                  color: "var(--foreground)"
                 }}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
+                labelStyle={{ color: "var(--foreground)" }}
               />
               <Legend 
                 wrapperStyle={{ paddingTop: "10px" }}
-                formatter={(value) => <span style={{ color: "hsl(var(--muted-foreground))", fontSize: "12px" }}>{value}</span>}
+                formatter={(value) => <span style={{ color: "var(--foreground)", fontSize: "12px" }}>{value}</span>}
               />
               <Line 
                 yAxisId="left"
                 type="monotone" 
                 dataKey="weight" 
                 name="Peso (kg)"
-                stroke="hsl(var(--primary))" 
+                stroke="var(--chart-weight)" 
                 strokeWidth={2}
-                dot={{ fill: "hsl(var(--primary))", strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, fill: "hsl(var(--primary))" }}
+                dot={{ fill: "var(--chart-weight)", strokeWidth: 0, r: 3 }}
+                activeDot={{ r: 5, fill: "var(--chart-weight)" }}
               />
               <Line 
                 yAxisId="right"
                 type="monotone" 
                 dataKey="bmi" 
                 name="IMC"
-                stroke="hsl(var(--chart-3))" 
+                stroke="var(--chart-bmi)" 
                 strokeWidth={2}
-                dot={{ fill: "hsl(var(--chart-3))", strokeWidth: 0, r: 3 }}
-                activeDot={{ r: 5, fill: "hsl(var(--chart-3))" }}
+                dot={{ fill: "var(--chart-bmi)", strokeWidth: 0, r: 3 }}
+                activeDot={{ r: 5, fill: "var(--chart-bmi)" }}
               />
               <Line 
                 yAxisId="right"
                 type="linear" 
                 dataKey="bmiTrend" 
                 name="Tendencia IMC"
-                stroke={bmiTrend.direction === "improving" ? "hsl(var(--success))" : 
-                        bmiTrend.direction === "deteriorating" ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))"}
+                stroke={trendLineColor}
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}

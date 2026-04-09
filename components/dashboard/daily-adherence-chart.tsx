@@ -10,7 +10,8 @@ import {
   Tooltip, 
   ResponsiveContainer,
   ReferenceLine,
-  Cell
+  Cell,
+  Legend
 } from "recharts"
 import type { DailyAdherence } from "@/lib/mock-data"
 import { Calendar } from "lucide-react"
@@ -22,13 +23,13 @@ interface DailyAdherenceChartProps {
 
 export function DailyAdherenceChart({ data, title = "Adherencia Diaria (30 días)" }: DailyAdherenceChartProps) {
   const getBarColor = (value: number) => {
-    if (value >= 80) return "hsl(var(--success))"
-    if (value >= 60) return "hsl(var(--warning))"
-    return "hsl(var(--destructive))"
+    if (value >= 80) return "var(--success)"
+    if (value >= 60) return "var(--warning)"
+    return "var(--destructive)"
   }
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -39,16 +40,21 @@ export function DailyAdherenceChart({ data, title = "Adherencia Diaria (30 días
         <div className="h-[200px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="var(--chart-grid)" 
+                strokeOpacity={0.3}
+                vertical={false} 
+              />
               <XAxis 
                 dataKey="date" 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 9 }}
-                axisLine={{ stroke: "hsl(var(--border))" }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 9 }}
+                axisLine={{ stroke: "var(--chart-grid)", strokeOpacity: 0.5 }}
                 tickLine={false}
                 interval={4}
               />
               <YAxis 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 domain={[0, 100]}
@@ -56,20 +62,25 @@ export function DailyAdherenceChart({ data, title = "Adherencia Diaria (30 días
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
-                  color: "hsl(var(--foreground))"
+                  color: "var(--foreground)"
                 }}
-                labelStyle={{ color: "hsl(var(--foreground))" }}
+                labelStyle={{ color: "var(--foreground)" }}
                 formatter={(value: number) => [`${value}%`, "Adherencia"]}
+              />
+              <Legend 
+                wrapperStyle={{ paddingTop: "10px" }}
+                formatter={(value) => <span style={{ color: "var(--foreground)", fontSize: "12px" }}>{value}</span>}
               />
               <ReferenceLine 
                 y={80} 
-                stroke="hsl(var(--success))" 
+                stroke="var(--chart-target)" 
                 strokeDasharray="3 3"
+                strokeWidth={2}
               />
-              <Bar dataKey="adherence" radius={[2, 2, 0, 0]}>
+              <Bar dataKey="adherence" name="Adherencia Diaria" radius={[2, 2, 0, 0]}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={getBarColor(entry.adherence)} />
                 ))}

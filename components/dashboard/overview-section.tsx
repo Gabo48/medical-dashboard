@@ -233,7 +233,7 @@ export function OverviewSection() {
       </div>
 
       {/* Alert Evolution Chart */}
-      <Card className="bg-card border-border">
+      <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-foreground">
             Evolución de Alertas - Últimos {timePeriod} días
@@ -243,49 +243,54 @@ export function OverviewSection() {
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={alertEvolutionData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  stroke="var(--chart-grid)" 
+                  strokeOpacity={0.3}
+                  vertical={true} 
+                />
                 <XAxis 
                   dataKey="period" 
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                  axisLine={{ stroke: "hsl(var(--border))" }}
+                  tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
+                  axisLine={{ stroke: "var(--chart-grid)", strokeOpacity: 0.5 }}
                   tickLine={false}
                 />
                 <YAxis 
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                   allowDecimals={false}
                 />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
-                    color: "hsl(var(--foreground))"
+                    color: "var(--foreground)"
                   }}
-                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                  labelStyle={{ color: "var(--foreground)" }}
                 />
                 <Legend 
                   wrapperStyle={{ paddingTop: "10px" }}
-                  formatter={(value) => <span style={{ color: "hsl(var(--muted-foreground))", fontSize: "12px" }}>{value}</span>}
+                  formatter={(value) => <span style={{ color: "var(--foreground)", fontSize: "12px" }}>{value}</span>}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="abandonmentRisk" 
                   name="Riesgo Abandono Alto"
-                  stroke="hsl(var(--destructive))" 
+                  stroke="var(--destructive)" 
                   strokeWidth={2}
-                  dot={{ fill: "hsl(var(--destructive))", strokeWidth: 0, r: 3 }}
-                  activeDot={{ r: 5, fill: "hsl(var(--destructive))" }}
+                  dot={{ fill: "var(--destructive)", strokeWidth: 0, r: 3 }}
+                  activeDot={{ r: 5, fill: "var(--destructive)" }}
                 />
                 <Line 
                   type="monotone" 
                   dataKey="treatmentRisk" 
                   name="Riesgo Tratamiento Alto"
-                  stroke="hsl(var(--warning))" 
+                  stroke="var(--warning)" 
                   strokeWidth={2}
-                  dot={{ fill: "hsl(var(--warning))", strokeWidth: 0, r: 3 }}
-                  activeDot={{ r: 5, fill: "hsl(var(--warning))" }}
+                  dot={{ fill: "var(--warning)", strokeWidth: 0, r: 3 }}
+                  activeDot={{ r: 5, fill: "var(--warning)" }}
                 />
               </LineChart>
             </ResponsiveContainer>

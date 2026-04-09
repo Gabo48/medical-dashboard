@@ -9,7 +9,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Cell
+  Cell,
+  Legend
 } from "recharts"
 import type { SideEffectReport } from "@/lib/mock-data"
 import { AlertCircle, Pill } from "lucide-react"
@@ -21,14 +22,14 @@ interface SideEffectsChartProps {
 
 export function SideEffectsChart({ data, title = "Efectos Secundarios Reportados" }: SideEffectsChartProps) {
   const getSeverityColor = (severity: string) => {
-    if (severity === "mild") return "hsl(var(--success))"
-    if (severity === "moderate") return "hsl(var(--warning))"
-    return "hsl(var(--destructive))"
+    if (severity === "mild") return "var(--success)"
+    if (severity === "moderate") return "var(--warning)"
+    return "var(--destructive)"
   }
 
   if (data.length === 0) {
     return (
-      <Card className="bg-card border-border">
+      <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
             <Pill className="h-4 w-4 text-muted-foreground" />
@@ -48,7 +49,7 @@ export function SideEffectsChart({ data, title = "Efectos Secundarios Reportados
   }
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
           <Pill className="h-4 w-4 text-muted-foreground" />
@@ -63,31 +64,41 @@ export function SideEffectsChart({ data, title = "Efectos Secundarios Reportados
               layout="vertical" 
               margin={{ top: 5, right: 20, left: 80, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={true} vertical={false} />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                stroke="var(--chart-grid)" 
+                strokeOpacity={0.3}
+                horizontal={true} 
+                vertical={true} 
+              />
               <XAxis 
                 type="number" 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis 
                 dataKey="name" 
                 type="category" 
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                tick={{ fill: "var(--chart-grid)", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
                 width={75}
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: "8px",
-                  color: "hsl(var(--foreground))"
+                  color: "var(--foreground)"
                 }}
                 formatter={(value: number) => [`${value} veces`, "Reportado"]}
               />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+              <Legend 
+                wrapperStyle={{ paddingTop: "10px" }}
+                formatter={(value) => <span style={{ color: "var(--foreground)", fontSize: "12px" }}>{value}</span>}
+              />
+              <Bar dataKey="count" name="Reportes" radius={[0, 4, 4, 0]}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={getSeverityColor(entry.severity)} />
                 ))}

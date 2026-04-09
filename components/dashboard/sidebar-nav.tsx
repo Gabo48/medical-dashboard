@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/components/theme-provider"
+import { useState, useEffect } from "react"
 
 interface SidebarNavProps {
   activeSection: string
@@ -25,6 +26,12 @@ const navItems = [
 
 export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) {
   const { theme, toggleTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch by only rendering theme-dependent UI after mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <aside className="w-56 bg-sidebar border-r border-sidebar-border flex flex-col h-screen md:fixed md:left-0 md:top-0">
@@ -70,12 +77,16 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
           className="w-full justify-start gap-3 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           onClick={toggleTheme}
         >
-          {theme === "dark" ? (
-            <Sun className="h-4 w-4" />
+          {mounted ? (
+            theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )
           ) : (
-            <Moon className="h-4 w-4" />
+            <Sun className="h-4 w-4" />
           )}
-          {theme === "dark" ? "Modo claro" : "Modo oscuro"}
+          {mounted ? (theme === "dark" ? "Modo claro" : "Modo oscuro") : "Cambiar tema"}
         </Button>
         <div className="mt-3 px-3 py-2 rounded-lg bg-muted/50">
           <p className="text-xs text-muted-foreground">Dr. Juan Pérez</p>
