@@ -361,6 +361,65 @@ export const symptoms: SymptomReport[] = [
 export const getPatientSymptoms = (patientId: string) => 
   symptoms.filter(s => s.patientId === patientId)
 
+export interface PatientInteraction {
+  id: string
+  patientId: string
+  summary: string
+  date: string
+  type: "medication_report" | "symptom_report" | "appointment" | "chat" | "weight_log" | "mood_log"
+  result: "completed" | "skipped" | "error" | "pending"
+}
+
+const interactionTypes = {
+  medication_report: "Reporte de medicamento",
+  symptom_report: "Reporte de síntomas",
+  appointment: "Cita médica",
+  chat: "Conversación",
+  weight_log: "Registro de peso",
+  mood_log: "Registro de ánimo"
+}
+
+const interactionResults = {
+  completed: "Completado",
+  skipped: "Omitido",
+  error: "Error",
+  pending: "Pendiente"
+}
+
+export const patientInteractions: PatientInteraction[] = [
+  { id: "I001", patientId: "P001", summary: "Tomé mi dosis de la mañana sin problemas", date: "2024-01-15", type: "medication_report", result: "completed" },
+  { id: "I002", patientId: "P001", summary: "Me siento con más energía hoy", date: "2024-01-15", type: "mood_log", result: "completed" },
+  { id: "I003", patientId: "P001", summary: "Registré mi peso: 92kg", date: "2024-01-14", type: "weight_log", result: "completed" },
+  { id: "I004", patientId: "P001", summary: "Consulta de seguimiento con Dr. Pérez", date: "2024-01-12", type: "appointment", result: "completed" },
+  { id: "I005", patientId: "P002", summary: "Olvidé tomar la dosis de la noche", date: "2024-01-10", type: "medication_report", result: "skipped" },
+  { id: "I006", patientId: "P002", summary: "Reporté mareos después del almuerzo", date: "2024-01-10", type: "symptom_report", result: "completed" },
+  { id: "I007", patientId: "P002", summary: "No pude asistir a la cita", date: "2024-01-08", type: "appointment", result: "skipped" },
+  { id: "I008", patientId: "P002", summary: "Pregunté sobre efectos secundarios", date: "2024-01-07", type: "chat", result: "completed" },
+  { id: "I009", patientId: "P003", summary: "Completé mi rutina de ejercicios", date: "2024-01-15", type: "chat", result: "completed" },
+  { id: "I010", patientId: "P003", summary: "Peso actual: 78kg, muy contenta", date: "2024-01-15", type: "weight_log", result: "completed" },
+  { id: "I011", patientId: "P003", summary: "Todas las dosis completadas esta semana", date: "2024-01-14", type: "medication_report", result: "completed" },
+  { id: "I012", patientId: "P003", summary: "Cita de control nutricional", date: "2024-01-13", type: "appointment", result: "completed" },
+  { id: "I013", patientId: "P004", summary: "Tuve náuseas pero tomé el medicamento", date: "2024-01-14", type: "medication_report", result: "completed" },
+  { id: "I014", patientId: "P004", summary: "Error al sincronizar datos de peso", date: "2024-01-13", type: "weight_log", result: "error" },
+  { id: "I015", patientId: "P004", summary: "Reporté fatiga durante el día", date: "2024-01-12", type: "symptom_report", result: "completed" },
+  { id: "I016", patientId: "P005", summary: "No me sentí bien para registrar", date: "2024-01-05", type: "medication_report", result: "skipped" },
+  { id: "I017", patientId: "P005", summary: "Vómitos severos reportados", date: "2024-01-04", type: "symptom_report", result: "completed" },
+  { id: "I018", patientId: "P005", summary: "Cancelé mi cita por malestar", date: "2024-01-03", type: "appointment", result: "skipped" },
+  { id: "I019", patientId: "P005", summary: "Solicité hablar con un médico", date: "2024-01-02", type: "chat", result: "pending" },
+  { id: "I020", patientId: "P006", summary: "Todo bien con la medicación", date: "2024-01-15", type: "medication_report", result: "completed" },
+  { id: "I021", patientId: "P006", summary: "Mi ánimo está muy positivo", date: "2024-01-15", type: "mood_log", result: "completed" },
+  { id: "I022", patientId: "P006", summary: "Registré 95kg, sigo bajando", date: "2024-01-14", type: "weight_log", result: "completed" },
+]
+
+export const getPatientInteractions = (patientId: string): PatientInteraction[] => {
+  return patientInteractions
+    .filter(i => i.patientId === patientId)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+}
+
+export const getInteractionTypeLabel = (type: PatientInteraction["type"]) => interactionTypes[type]
+export const getInteractionResultLabel = (result: PatientInteraction["result"]) => interactionResults[result]
+
 export const aggregateMetrics = () => {
   const total = patients.length
   const avgAdherence = patients.reduce((sum, p) => sum + p.adherence, 0) / total

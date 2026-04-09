@@ -13,6 +13,7 @@ import { DailyAdherenceChart } from "./daily-adherence-chart"
 import { WeeklyAdherenceChart } from "./weekly-adherence-chart"
 import { SideEffectsChart } from "./side-effects-chart"
 import { SymptomsList } from "./symptoms-list"
+import { InteractionsTable } from "./interactions-table"
 import type { Patient } from "@/lib/mock-data"
 import { 
   getWeightHistory, 
@@ -21,7 +22,8 @@ import {
   getPatientSymptoms,
   getDailyAdherenceHistory,
   getWeeklyAdherenceHistory,
-  getSideEffectsReport
+  getSideEffectsReport,
+  getPatientInteractions
 } from "@/lib/mock-data"
 import { 
   Scale, 
@@ -52,6 +54,7 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
   const dailyAdherence = getDailyAdherenceHistory(patient.id)
   const weeklyAdherence = getWeeklyAdherenceHistory(patient.id)
   const sideEffects = getSideEffectsReport(patient.id)
+  const interactions = getPatientInteractions(patient.id)
 
   // Calculate days without registering (simulated based on last interaction)
   const lastInteractionDate = new Date(patient.lastInteraction)
@@ -343,6 +346,9 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
       {/* Symptoms Table */}
       <SymptomsList symptoms={symptoms} />
+
+      {/* Interactions Table */}
+      <InteractionsTable interactions={interactions} />
     </div>
   )
 }

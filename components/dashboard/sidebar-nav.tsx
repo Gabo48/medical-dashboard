@@ -4,10 +4,7 @@ import { cn } from "@/lib/utils"
 import { 
   LayoutDashboard, 
   Users, 
-  Activity, 
-  AlertTriangle,
   Calendar,
-  MessageSquare,
   Heart,
   Sun,
   Moon
@@ -23,10 +20,7 @@ interface SidebarNavProps {
 const navItems = [
   { id: "overview", label: "Resumen", icon: LayoutDashboard },
   { id: "patients", label: "Pacientes", icon: Users },
-  { id: "alerts", label: "Alertas", icon: AlertTriangle },
-  { id: "metrics", label: "Métricas", icon: Activity },
   { id: "appointments", label: "Citas", icon: Calendar },
-  { id: "interactions", label: "Interacciones", icon: MessageSquare },
 ]
 
 export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) {

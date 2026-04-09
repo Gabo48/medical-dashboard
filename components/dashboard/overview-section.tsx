@@ -32,6 +32,16 @@ export function OverviewSection() {
   const [treatmentType, setTreatmentType] = useState("obesity")
   const metrics = aggregateMetrics()
 
+  // Filter critical patients (abandonment risk >= 4 OR treatment risk >= 4)
+  const criticalPatients = patients
+    .filter(p => p.abandonmentRisk >= 4 || p.treatmentRisk >= 4)
+    .sort((a, b) => {
+      // Sort by highest risk (abandonment or treatment) descending
+      const aMaxRisk = Math.max(a.abandonmentRisk, a.treatmentRisk)
+      const bMaxRisk = Math.max(b.abandonmentRisk, b.treatmentRisk)
+      return bMaxRisk - aMaxRisk
+    })
+
   const highAbandonmentRisk = patients.filter(p => p.abandonmentRisk >= 4).length
   const highTreatmentRisk = patients.filter(p => p.treatmentRisk >= 4).length
 
@@ -178,19 +188,33 @@ export function OverviewSection() {
         </Card>
       </div>
 
-      {/* Patients Table */}
+      {/* Critical Patients Table */}
       <div>
         <div className="flex flex-col gap-1 mb-4 md:flex-row md:items-center md:justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Lista de Pacientes</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            Pacientes Críticos o en Alto Riesgo
+          </h2>
           <p className="text-sm text-muted-foreground">
-            Haz clic en un paciente para ver detalles
+            Ordenados por nivel de riesgo (mayor a menor)
           </p>
         </div>
-        <PatientsTable 
-          patients={patients} 
-          onSelectPatient={setSelectedPatient}
-          selectedPatientId={selectedPatient?.id}
-        />
+        {criticalPatients.length > 0 ? (
+          <PatientsTable 
+            patients={criticalPatients} 
+            onSelectPatient={setSelectedPatient}
+            selectedPatientId={selectedPatient?.id}
+          />
+        ) : (
+          <div className="rounded-xl border border-border bg-card p-8 text-center">
+            <div className="rounded-full bg-success/10 p-4 w-fit mx-auto mb-4">
+              <AlertTriangle className="h-8 w-8 text-success" />
+            </div>
+            <h3 className="text-lg font-medium text-foreground">Sin pacientes críticos</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Todos los pacientes están dentro de parámetros seguros
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
