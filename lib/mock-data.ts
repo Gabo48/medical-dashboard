@@ -420,6 +420,100 @@ export const getPatientInteractions = (patientId: string): PatientInteraction[] 
 export const getInteractionTypeLabel = (type: PatientInteraction["type"]) => interactionTypes[type]
 export const getInteractionResultLabel = (result: PatientInteraction["result"]) => interactionResults[result]
 
+// Patient Intent Types
+export type PatientIntentType = 
+  | "report_adherence"
+  | "report_non_adherence"
+  | "report_symptom"
+  | "negative_emotion"
+  | "positive_emotion"
+  | "show_resistance"
+  | "request_help"
+  | "express_doubt"
+  | "confirm"
+  | "partial_response"
+
+export interface PatientIntentData {
+  intent: PatientIntentType
+  label: string
+  count: number
+  percentage: number
+}
+
+const intentLabels: Record<PatientIntentType, string> = {
+  report_adherence: "Reportar adherencia",
+  report_non_adherence: "Reportar no adherencia",
+  report_symptom: "Reportar síntoma",
+  negative_emotion: "Expresar emoción negativa",
+  positive_emotion: "Expresar emoción positiva",
+  show_resistance: "Mostrar resistencia",
+  request_help: "Solicitar ayuda",
+  express_doubt: "Expresar duda",
+  confirm: "Confirmar",
+  partial_response: "Responder parcialmente"
+}
+
+export const getPatientIntents = (patientId: string): PatientIntentData[] => {
+  const patient = patients.find(p => p.id === patientId)
+  if (!patient) return []
+
+  // Generate intent distribution based on patient profile
+  const totalMessages = patient.messagesCount
+  const isHighAdherence = patient.adherence >= 80
+  const isPositiveMood = patient.mood >= 4
+
+  // Base distribution varies by patient profile
+  const baseDistribution: Record<PatientIntentType, number> = {
+    report_adherence: isHighAdherence ? 0.25 : 0.10,
+    report_non_adherence: isHighAdherence ? 0.05 : 0.15,
+    report_symptom: patient.symptomsCount > 2 ? 0.15 : 0.08,
+    negative_emotion: isPositiveMood ? 0.05 : 0.15,
+    positive_emotion: isPositiveMood ? 0.15 : 0.05,
+    show_resistance: patient.abandonmentRisk >= 4 ? 0.10 : 0.03,
+    request_help: 0.10,
+    express_doubt: isHighAdherence ? 0.05 : 0.12,
+    confirm: 0.15,
+    partial_response: 0.07
+  }
+
+  // Normalize to 100%
+  const total = Object.values(baseDistribution).reduce((a, b) => a + b, 0)
+  
+  return Object.entries(baseDistribution).map(([intent, ratio]) => {
+    const normalizedRatio = ratio / total
+    const count = Math.round(totalMessages * normalizedRatio)
+    return {
+      intent: intent as PatientIntentType,
+      label: intentLabels[intent as PatientIntentType],
+      count,
+      percentage: Math.round(normalizedRatio * 100)
+    }
+  }).sort((a, b) => b.count - a.count)
+}
+
+export const getIntentLabel = (intent: PatientIntentType) => intentLabels[intent]
+
+// Medical Events Frequency
+export interface MedicalEventFrequency {
+  eventsPerWeek: number
+  scheduledEvents: number
+  completedEvents: number
+}
+
+export const getMedicalEventFrequency = (patientId: string): MedicalEventFrequency => {
+  const patient = patients.find(p => p.id === patientId)
+  if (!patient) return { eventsPerWeek: 0, scheduledEvents: 0, completedEvents: 0 }
+
+  const weeksInTreatment = Math.ceil(patient.treatmentDays / 7)
+  const totalEvents = patient.appointmentsTotal + Math.floor(patient.treatmentDays / 7) * 2 // appointments + weekly check-ins
+  
+  return {
+    eventsPerWeek: Math.round((totalEvents / weeksInTreatment) * 10) / 10,
+    scheduledEvents: totalEvents,
+    completedEvents: patient.appointmentsAttended + Math.floor(patient.adherence / 100 * patient.treatmentDays / 7) * 2
+  }
+}
+
 export const aggregateMetrics = () => {
   const total = patients.length
   const avgAdherence = patients.reduce((sum, p) => sum + p.adherence, 0) / total

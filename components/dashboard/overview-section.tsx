@@ -3,7 +3,7 @@
 import { KPICard } from "./kpi-card"
 import { PatientsTable } from "./patients-table"
 import { PatientDetail } from "./patient-detail"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { patients, aggregateMetrics } from "@/lib/mock-data"
 import type { Patient } from "@/lib/mock-data"
 import { 
@@ -22,9 +22,20 @@ import {
   Heart,
   Brain,
   Calendar,
-  ShieldAlert
+  ShieldAlert,
+  CalendarCheck
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  Legend
+} from "recharts"
 
 export function OverviewSection() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
@@ -44,6 +55,32 @@ export function OverviewSection() {
 
   const highAbandonmentRisk = patients.filter(p => p.abandonmentRisk >= 4).length
   const highTreatmentRisk = patients.filter(p => p.treatmentRisk >= 4).length
+
+  // Calculate average attendance rate
+  const avgAttendanceRate = Math.round(
+    patients.reduce((sum, p) => sum + p.appointmentRate, 0) / patients.length
+  )
+
+  // Generate alert evolution data based on time period
+  const alertEvolutionData = useMemo(() => {
+    const days = parseInt(timePeriod)
+    const dataPoints = Math.min(days, 12) // Max 12 data points
+    const interval = Math.floor(days / dataPoints)
+    
+    return Array.from({ length: dataPoints }, (_, i) => {
+      const dayLabel = days <= 14 ? `Día ${(i + 1) * interval}` : `Sem ${i + 1}`
+      // Simulate historical data with some variance
+      const abandonmentBase = highAbandonmentRisk
+      const treatmentBase = highTreatmentRisk
+      const variance = Math.floor(Math.random() * 2)
+      
+      return {
+        period: dayLabel,
+        abandonmentRisk: Math.max(0, abandonmentBase + (i < dataPoints / 2 ? variance : -variance)),
+        treatmentRisk: Math.max(0, treatmentBase + (i < dataPoints / 2 ? -variance : variance))
+      }
+    })
+  }, [timePeriod, highAbandonmentRisk, highTreatmentRisk])
 
   if (selectedPatient) {
     return (
@@ -102,7 +139,7 @@ export function OverviewSection() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <KPICard
           title="Pacientes"
           value={metrics.totalPatients}
@@ -114,6 +151,13 @@ export function OverviewSection() {
           trend={Number(metrics.avgAdherence) >= 80 ? "up" : "down"}
           trendValue="Meta: 80%"
           icon={<Activity className="h-4 w-4" />}
+        />
+        <KPICard
+          title="Asistencia Prom."
+          value={`${avgAttendanceRate}%`}
+          trend={avgAttendanceRate >= 80 ? "up" : "down"}
+          trendValue="Meta: 80%"
+          icon={<CalendarCheck className="h-4 w-4" />}
         />
         <KPICard
           title="Cambio IMC Prom."
@@ -187,6 +231,67 @@ export function OverviewSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Alert Evolution Chart */}
+      <Card className="bg-card border-border">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-foreground">
+            Evolución de Alertas - Últimos {timePeriod} días
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={alertEvolutionData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis 
+                  dataKey="period" 
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  axisLine={{ stroke: "hsl(var(--border))" }}
+                  tickLine={false}
+                />
+                <YAxis 
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  allowDecimals={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
+                    color: "hsl(var(--foreground))"
+                  }}
+                  labelStyle={{ color: "hsl(var(--foreground))" }}
+                />
+                <Legend 
+                  wrapperStyle={{ paddingTop: "10px" }}
+                  formatter={(value) => <span style={{ color: "hsl(var(--muted-foreground))", fontSize: "12px" }}>{value}</span>}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="abandonmentRisk" 
+                  name="Riesgo Abandono Alto"
+                  stroke="hsl(var(--destructive))" 
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--destructive))", strokeWidth: 0, r: 3 }}
+                  activeDot={{ r: 5, fill: "hsl(var(--destructive))" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="treatmentRisk" 
+                  name="Riesgo Tratamiento Alto"
+                  stroke="hsl(var(--warning))" 
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--warning))", strokeWidth: 0, r: 3 }}
+                  activeDot={{ r: 5, fill: "hsl(var(--warning))" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Critical Patients Table */}
       <div>

@@ -14,6 +14,7 @@ import { WeeklyAdherenceChart } from "./weekly-adherence-chart"
 import { SideEffectsChart } from "./side-effects-chart"
 import { SymptomsList } from "./symptoms-list"
 import { InteractionsTable } from "./interactions-table"
+import { IntentsByType } from "./intents-by-type"
 import type { Patient } from "@/lib/mock-data"
 import { 
   getWeightHistory, 
@@ -23,7 +24,9 @@ import {
   getDailyAdherenceHistory,
   getWeeklyAdherenceHistory,
   getSideEffectsReport,
-  getPatientInteractions
+  getPatientInteractions,
+  getPatientIntents,
+  getMedicalEventFrequency
 } from "@/lib/mock-data"
 import { 
   Scale, 
@@ -37,7 +40,8 @@ import {
   ArrowLeft,
   Clock,
   AlertTriangle,
-  ShieldAlert
+  ShieldAlert,
+  CalendarClock
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -55,6 +59,8 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
   const weeklyAdherence = getWeeklyAdherenceHistory(patient.id)
   const sideEffects = getSideEffectsReport(patient.id)
   const interactions = getPatientInteractions(patient.id)
+  const patientIntents = getPatientIntents(patient.id)
+  const medicalEventFrequency = getMedicalEventFrequency(patient.id)
 
   // Calculate days without registering (simulated based on last interaction)
   const lastInteractionDate = new Date(patient.lastInteraction)
@@ -309,26 +315,56 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
         </CardContent>
       </Card>
 
-      {/* Interaction with Sarah */}
-      <Card className="bg-card border-border">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-foreground">Interacción con Sarah</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-primary">
-              <MessageSquare className="h-5 w-5" />
-              <span className="text-2xl font-bold">{patient.messagesCount}</span>
+      {/* Interaction with Sarah & Medical Events */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-foreground">Interacción con Sarah</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-primary">
+                <MessageSquare className="h-5 w-5" />
+                <span className="text-2xl font-bold">{patient.messagesCount}</span>
+              </div>
+              <div>
+                <p className="text-sm text-foreground">mensajes totales</p>
+                <p className="text-xs text-muted-foreground">
+                  Última interacción: {patient.lastInteraction}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-foreground">mensajes totales</p>
-              <p className="text-xs text-muted-foreground">
-                Última interacción: {patient.lastInteraction}
-              </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-muted-foreground" />
+              Frecuencia de Eventos Médicos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-6">
+              <div>
+                <span className="text-2xl font-bold text-foreground">{medicalEventFrequency.eventsPerWeek}</span>
+                <p className="text-xs text-muted-foreground">eventos/semana</p>
+              </div>
+              <Separator orientation="vertical" className="h-10" />
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 rounded-full bg-muted-foreground" />
+                  <span className="text-muted-foreground">Programados: {medicalEventFrequency.scheduledEvents}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="w-2 h-2 rounded-full bg-success" />
+                  <span className="text-muted-foreground">Completados: {medicalEventFrequency.completedEvents}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Adherence Charts */}
       <DailyAdherenceChart data={dailyAdherence} />
@@ -346,6 +382,9 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
       {/* Symptoms Table */}
       <SymptomsList symptoms={symptoms} />
+
+      {/* Intents by Type */}
+      <IntentsByType data={patientIntents} totalMessages={patient.messagesCount} />
 
       {/* Interactions Table */}
       <InteractionsTable interactions={interactions} />

@@ -12,7 +12,8 @@ import {
   Calendar, 
   Menu,
   Heart,
-  Search
+  Search,
+  AlertTriangle
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -145,7 +146,14 @@ export default function DashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        {/* Alert indicator for high-risk patients with missed events */}
+                        {(patient.missedEvents + patient.cancelledEvents) >= 2 && patient.abandonmentRisk >= 3 && (
+                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-destructive/10 border border-destructive/30">
+                            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+                            <span className="text-xs font-medium text-destructive">Alerta</span>
+                          </div>
+                        )}
                         <div className="text-right">
                           <p className={cn(
                             "font-mono text-sm",
