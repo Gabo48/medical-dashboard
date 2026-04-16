@@ -9,11 +9,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { AlertBadge, MoodBadge } from "./alert-badge"
 import type { Patient } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { ArrowUpDown, ArrowUp, ArrowDown, HelpCircle } from "lucide-react"
 
 interface PatientsTableProps {
   patients: Patient[]
@@ -21,7 +26,35 @@ interface PatientsTableProps {
   selectedPatientId?: string
 }
 
-type SortKey = "name" | "bmi" | "bmiChange" | "adherence" | "mood" | "abandonmentRisk" | "treatmentRisk"
+type SortKey = "name" | "bmi" | "bmiChange" | "adherence" | "abandonmentRisk" | "treatmentRisk"
+
+// Risk level legend
+const riskLevelLabels: Record<number, string> = {
+  1: "Muy bajo",
+  2: "Bajo",
+  3: "Moderado",
+  4: "Alto",
+  5: "Critico"
+}
+
+// Risk level colors
+const getRiskColor = (level: number) => {
+  if (level === 1) return "bg-success/20 text-success"
+  if (level === 2) return "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+  if (level === 3) return "bg-warning/20 text-warning"
+  if (level === 4) return "bg-orange-500/20 text-orange-600 dark:text-orange-400"
+  return "bg-destructive/20 text-destructive"
+}
+
+// Column definitions with descriptions
+const columnDefinitions: Record<string, string> = {
+  name: "Nombre completo del paciente, edad y genero",
+  bmi: "Indice de Masa Corporal actual del paciente",
+  bmiChange: "Variacion porcentual del IMC desde el inicio del tratamiento",
+  adherence: "Porcentaje de cumplimiento del tratamiento medicamentoso",
+  abandonmentRisk: "Probabilidad de que el paciente abandone el tratamiento (1-5)",
+  treatmentRisk: "Riesgo de complicaciones o efectos adversos del tratamiento (1-5)"
+}
 type SortDirection = "asc" | "desc" | null
 
 function AdherenceBar({ value }: { value: number }) {
@@ -56,9 +89,10 @@ interface SortableHeaderProps {
   direction: SortDirection
   onSort: (key: SortKey) => void
   className?: string
+  description?: string
 }
 
-function SortableHeader({ label, sortKey, currentSort, direction, onSort, className }: SortableHeaderProps) {
+function SortableHeader({ label, sortKey, currentSort, direction, onSort, className, description }: SortableHeaderProps) {
   const isActive = currentSort === sortKey
   
   return (
@@ -71,6 +105,16 @@ function SortableHeader({ label, sortKey, currentSort, direction, onSort, classN
     >
       <div className="flex items-center gap-1.5">
         <span>{label}</span>
+        {description && (
+          <Tooltip>
+            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <HelpCircle className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[200px] text-xs">
+              {description}
+            </TooltipContent>
+          </Tooltip>
+        )}
         <span className={cn("transition-colors", isActive ? "text-foreground" : "text-muted-foreground/50")}>
           {isActive && direction === "asc" ? (
             <ArrowUp className="h-3.5 w-3.5" />
@@ -129,10 +173,6 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
           aValue = a.adherence
           bValue = b.adherence
           break
-        case "mood":
-          aValue = a.mood + a.motivation
-          bValue = b.mood + b.motivation
-          break
         case "abandonmentRisk":
           aValue = a.abandonmentRisk
           bValue = b.abandonmentRisk
@@ -158,7 +198,20 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
   }, [patients, sortKey, sortDirection])
 
   return (
+    <TooltipProvider>
     <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      {/* Risk Level Legend */}
+      <div className="px-4 py-2 bg-muted/20 border-b border-border flex items-center gap-4 flex-wrap text-xs">
+        <span className="text-muted-foreground font-medium">Niveles de riesgo:</span>
+        {[1, 2, 3, 4, 5].map(level => (
+          <span key={level} className="flex items-center gap-1">
+            <span className={cn("w-5 h-5 rounded flex items-center justify-center font-mono font-bold text-xs", getRiskColor(level))}>
+              {level}
+            </span>
+            <span className="text-muted-foreground">{riskLevelLabels[level]}</span>
+          </span>
+        ))}
+      </div>
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border">
@@ -167,7 +220,8 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
               sortKey="name" 
               currentSort={sortKey} 
               direction={sortDirection} 
-              onSort={handleSort} 
+              onSort={handleSort}
+              description={columnDefinitions.name}
             />
             <SortableHeader 
               label="IMC" 
@@ -176,6 +230,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
               direction={sortDirection} 
               onSort={handleSort} 
               className="text-center"
+              description={columnDefinitions.bmi}
             />
             <SortableHeader 
               label="Cambio IMC" 
@@ -184,21 +239,15 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
               direction={sortDirection} 
               onSort={handleSort} 
               className="text-center"
+              description={columnDefinitions.bmiChange}
             />
             <SortableHeader 
               label="Adherencia" 
               sortKey="adherence" 
               currentSort={sortKey} 
               direction={sortDirection} 
-              onSort={handleSort} 
-            />
-            <SortableHeader 
-              label="Estado" 
-              sortKey="mood" 
-              currentSort={sortKey} 
-              direction={sortDirection} 
-              onSort={handleSort} 
-              className="text-center"
+              onSort={handleSort}
+              description={columnDefinitions.adherence}
             />
             <SortableHeader 
               label="Riesgo Abandono" 
@@ -207,6 +256,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
               direction={sortDirection} 
               onSort={handleSort} 
               className="text-center"
+              description={columnDefinitions.abandonmentRisk}
             />
             <SortableHeader 
               label="Riesgo Tratamiento" 
@@ -215,6 +265,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
               direction={sortDirection} 
               onSort={handleSort} 
               className="text-center"
+              description={columnDefinitions.treatmentRisk}
             />
           </TableRow>
         </TableHeader>
@@ -262,21 +313,34 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                 <AdherenceBar value={patient.adherence} />
               </TableCell>
               <TableCell className="text-center py-3">
-                <div className="flex items-center justify-center gap-2">
-                  <MoodBadge value={patient.mood} />
-                  <MoodBadge value={patient.motivation} />
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={cn("inline-flex items-center justify-center w-7 h-7 rounded font-mono font-bold text-sm cursor-help", getRiskColor(patient.abandonmentRisk))}>
+                      {patient.abandonmentRisk}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {riskLevelLabels[patient.abandonmentRisk]}
+                  </TooltipContent>
+                </Tooltip>
               </TableCell>
               <TableCell className="text-center py-3">
-                <AlertBadge level={patient.abandonmentRisk} type="abandonment" />
-              </TableCell>
-              <TableCell className="text-center py-3">
-                <AlertBadge level={patient.treatmentRisk} type="treatment" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={cn("inline-flex items-center justify-center w-7 h-7 rounded font-mono font-bold text-sm cursor-help", getRiskColor(patient.treatmentRisk))}>
+                      {patient.treatmentRisk}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {riskLevelLabels[patient.treatmentRisk]}
+                  </TooltipContent>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </div>
+    </TooltipProvider>
   )
 }

@@ -98,10 +98,7 @@ export function OverviewSection() {
       {/* Page Header with Filters */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Dashboard de Obesidad</h1>
-          <p className="text-sm text-muted-foreground">
-            Monitoreo de pacientes con tratamiento para obesidad
-          </p>
+          <h1 className="text-2xl font-bold text-foreground">Monitoreo de pacientes con tratamiento para obesidad</h1>
         </div>
         
         {/* Filters */}

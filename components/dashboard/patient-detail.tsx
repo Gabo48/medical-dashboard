@@ -337,9 +337,10 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
         <MedicationPlanCard 
           plan={medicationPlan}
           patientId={patient.id}
-          onUpdateMedication={(medId, updates) => console.log("[v0] Update medication:", medId, updates)}
-          onAddMedication={(med) => console.log("[v0] Add medication:", med)}
-          onUpdateNotes={(notes) => console.log("[v0] Update notes:", notes)}
+          onUpdateMedication={(medId, updates) => console.log("Update medication:", medId, updates)}
+          onAddMedication={(med) => console.log("Add medication:", med)}
+          onDeleteMedication={(medId) => console.log("Delete medication:", medId)}
+          onUpdateNotes={(notes) => console.log("Update notes:", notes)}
         />
       </div>
 

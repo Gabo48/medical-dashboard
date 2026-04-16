@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/ui/switch"
 import {
   Dialog,
   DialogContent,
@@ -32,8 +31,7 @@ import {
   Clock,
   Calendar,
   AlertTriangle,
-  Check,
-  X,
+  Trash2,
   User,
   Save
 } from "lucide-react"
@@ -44,6 +42,7 @@ interface MedicationPlanCardProps {
   patientId: string
   onUpdateMedication?: (medicationId: string, updates: Partial<Medication>) => void
   onAddMedication?: (medication: Omit<Medication, "id">) => void
+  onDeleteMedication?: (medicationId: string) => void
   onUpdateNotes?: (notes: string) => void
 }
 
@@ -55,6 +54,7 @@ export function MedicationPlanCard({
   patientId, 
   onUpdateMedication, 
   onAddMedication,
+  onDeleteMedication,
   onUpdateNotes 
 }: MedicationPlanCardProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -91,8 +91,8 @@ export function MedicationPlanCard({
     setEditingMedication(null)
   }
 
-  const handleToggleActive = (medication: Medication) => {
-    onUpdateMedication?.(medication.id, { isActive: !medication.isActive })
+  const handleDeleteMedication = (medicationId: string) => {
+    onDeleteMedication?.(medicationId)
   }
 
   const handleAddMedication = () => {
@@ -238,7 +238,7 @@ export function MedicationPlanCard({
             key={medication.id}
             medication={medication}
             onEdit={() => handleEditClick(medication)}
-            onToggle={() => handleToggleActive(medication)}
+            onDelete={() => handleDeleteMedication(medication.id)}
           />
         ))}
 
@@ -252,7 +252,7 @@ export function MedicationPlanCard({
                 key={medication.id}
                 medication={medication}
                 onEdit={() => handleEditClick(medication)}
-                onToggle={() => handleToggleActive(medication)}
+                onDelete={() => handleDeleteMedication(medication.id)}
               />
             ))}
           </>
@@ -352,11 +352,11 @@ export function MedicationPlanCard({
 function MedicationItem({ 
   medication, 
   onEdit, 
-  onToggle 
+  onDelete 
 }: { 
   medication: Medication
   onEdit: () => void
-  onToggle: () => void
+  onDelete: () => void
 }) {
   return (
     <div className={`p-3 rounded-lg border ${medication.isActive ? "bg-muted/30 border-border" : "bg-muted/10 border-border/50 opacity-60"}`}>
@@ -368,15 +368,13 @@ function MedicationItem({
             {medication.dosage}
           </Badge>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onEdit}>
             <Edit2 className="h-3.5 w-3.5" />
           </Button>
-          <Switch 
-            checked={medication.isActive}
-            onCheckedChange={onToggle}
-            className="scale-75"
-          />
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={onDelete}>
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </div>
       <div className="space-y-1 text-xs text-muted-foreground">
