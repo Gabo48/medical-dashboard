@@ -13,6 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import type { DateRange } from "react-day-picker"
 import { 
   Users, 
   TrendingDown, 
@@ -21,7 +27,7 @@ import {
   Stethoscope,
   Heart,
   Brain,
-  Calendar,
+  Calendar as CalendarIcon,
   ShieldAlert,
   CalendarCheck
 } from "lucide-react"
@@ -39,9 +45,17 @@ import {
 
 export function OverviewSection() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const [timePeriod, setTimePeriod] = useState("30")
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date()
+  })
   const [treatmentType, setTreatmentType] = useState("obesity")
   const metrics = aggregateMetrics()
+
+  // Calculate days in range for display
+  const daysInRange = dateRange?.from && dateRange?.to 
+    ? Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))
+    : 30
 
   // Filter critical patients (abandonment risk >= 4 OR treatment risk >= 4)
   const criticalPatients = patients
@@ -61,14 +75,14 @@ export function OverviewSection() {
     patients.reduce((sum, p) => sum + p.appointmentRate, 0) / patients.length
   )
 
-  // Generate alert evolution data based on time period
+  // Generate alert evolution data based on date range
   const alertEvolutionData = useMemo(() => {
-    const days = parseInt(timePeriod)
+    const days = daysInRange
     const dataPoints = Math.min(days, 12) // Max 12 data points
     const interval = Math.floor(days / dataPoints)
     
     return Array.from({ length: dataPoints }, (_, i) => {
-      const dayLabel = days <= 14 ? `Día ${(i + 1) * interval}` : `Sem ${i + 1}`
+      const dayLabel = days <= 14 ? `Dia ${(i + 1) * interval}` : `Sem ${i + 1}`
       // Simulate historical data with some variance
       const abandonmentBase = highAbandonmentRisk
       const treatmentBase = highTreatmentRisk
@@ -80,7 +94,7 @@ export function OverviewSection() {
         treatmentRisk: Math.max(0, treatmentBase + (i < dataPoints / 2 ? -variance : variance))
       }
     })
-  }, [timePeriod, highAbandonmentRisk, highTreatmentRisk])
+  }, [daysInRange, highAbandonmentRisk, highTreatmentRisk])
 
   if (selectedPatient) {
     return (
@@ -103,20 +117,70 @@ export function OverviewSection() {
         
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <Select value={timePeriod} onValueChange={setTimePeriod}>
-              <SelectTrigger className="w-[160px] bg-card">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Últimos 7 días</SelectItem>
-                <SelectItem value="14">Últimos 14 días</SelectItem>
-                <SelectItem value="30">Últimos 30 días</SelectItem>
-                <SelectItem value="90">Últimos 90 días</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2 text-sm bg-card">
+                <CalendarIcon className="h-4 w-4" />
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "dd MMM", { locale: es })} - {format(dateRange.to, "dd MMM yyyy", { locale: es })}
+                    </>
+                  ) : (
+                    format(dateRange.from, "dd MMM yyyy", { locale: es })
+                  )
+                ) : (
+                  "Seleccionar periodo"
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <div className="p-3 border-b border-border">
+                <p className="text-sm font-medium text-foreground">Seleccionar rango</p>
+                <div className="flex gap-2 mt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setDateRange({
+                      from: new Date(new Date().setDate(new Date().getDate() - 7)),
+                      to: new Date()
+                    })}
+                  >
+                    7 dias
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setDateRange({
+                      from: new Date(new Date().setDate(new Date().getDate() - 30)),
+                      to: new Date()
+                    })}
+                  >
+                    30 dias
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setDateRange({
+                      from: new Date(new Date().setMonth(new Date().getMonth() - 3)),
+                      to: new Date()
+                    })}
+                  >
+                    3 meses
+                  </Button>
+                </div>
+              </div>
+              <CalendarComponent
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                locale={es}
+              />
+            </PopoverContent>
+          </Popover>
           
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-muted-foreground" />
@@ -233,7 +297,7 @@ export function OverviewSection() {
       <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-foreground">
-            Evolución de Alertas - Últimos {timePeriod} días
+            Evolucion de Alertas - Ultimos {daysInRange} dias
           </CardTitle>
         </CardHeader>
         <CardContent>
