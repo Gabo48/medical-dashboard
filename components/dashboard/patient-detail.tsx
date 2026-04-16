@@ -215,6 +215,10 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             <BarChart3 className="h-4 w-4" />
             Estadisticas
           </TabsTrigger>
+          <TabsTrigger value="communication" className="gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Comunicacion
+          </TabsTrigger>
         </TabsList>
 
         {/* Information Tab */}
@@ -438,17 +442,6 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
           {/* Symptoms Table */}
           <SymptomsList symptoms={symptoms} />
-
-          {/* Messaging Panel */}
-          <MessagingPanel
-            patient={patient}
-            messages={patientMessages}
-            caregivers={caregivers}
-            onSendMessage={(msg) => console.log("[v0] Send message:", msg)}
-          />
-
-          {/* Interactions History */}
-          <InteractionsTable interactions={interactions} />
         </TabsContent>
 
         {/* Statistics Tab */}
@@ -520,6 +513,20 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
           {/* Intents by Type */}
           <IntentsByType data={patientIntents} totalMessages={patient.messagesCount} />
+        </TabsContent>
+
+        {/* Communication Tab */}
+        <TabsContent value="communication" className="space-y-4 mt-4">
+          {/* Messaging Panel */}
+          <MessagingPanel
+            patient={patient}
+            messages={patientMessages}
+            caregivers={caregivers}
+            onSendMessage={(msg) => console.log("[v0] Send message:", msg)}
+          />
+
+          {/* Interactions History */}
+          <InteractionsTable interactions={interactions} />
         </TabsContent>
       </Tabs>
     </div>
