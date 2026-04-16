@@ -131,11 +131,6 @@ export function SidebarNav({ activeSection, onSectionChange, treatmentType, onTr
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => {
-            // Handle logout - redirect to login page or clear session
-            console.log("[v0] Logout clicked")
-            window.location.href = "/login"
-          }}
         >
           <LogOut className="h-4 w-4" />
           Cerrar sesion
