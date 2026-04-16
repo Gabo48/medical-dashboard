@@ -1,29 +1,22 @@
 "use client"
 
-import { KPICard } from "./kpi-card"
+
 import { PatientsTable } from "./patients-table"
 import { PatientDetail } from "./patient-detail"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { patients, aggregateMetrics } from "@/lib/mock-data"
 import type { Patient } from "@/lib/mock-data"
+
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import type { DateRange } from "react-day-picker"
 import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { 
-  Users, 
-  TrendingDown, 
   Activity, 
   AlertTriangle, 
-  Stethoscope,
-  Heart,
-  Brain,
-  Calendar,
-  ShieldAlert,
-  CalendarCheck
+  Calendar as CalendarIcon,
+  ShieldAlert
 } from "lucide-react"
 import { useState, useMemo } from "react"
 import { 
@@ -37,14 +30,25 @@ import {
   Legend
 } from "recharts"
 
-export function OverviewSection() {
+interface OverviewSectionProps {
+  patients: Patient[]
+  treatmentLabel: string
+}
+
+export function OverviewSection({ patients: filteredPatients, treatmentLabel }: OverviewSectionProps) {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const [timePeriod, setTimePeriod] = useState("30")
-  const [treatmentType, setTreatmentType] = useState("obesity")
-  const metrics = aggregateMetrics()
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date()
+  })
+
+  // Calculate days in range for display
+  const daysInRange = dateRange?.from && dateRange?.to 
+    ? Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))
+    : 30
 
   // Filter critical patients (abandonment risk >= 4 OR treatment risk >= 4)
-  const criticalPatients = patients
+  const criticalPatients = filteredPatients
     .filter(p => p.abandonmentRisk >= 4 || p.treatmentRisk >= 4)
     .sort((a, b) => {
       // Sort by highest risk (abandonment or treatment) descending
@@ -53,22 +57,17 @@ export function OverviewSection() {
       return bMaxRisk - aMaxRisk
     })
 
-  const highAbandonmentRisk = patients.filter(p => p.abandonmentRisk >= 4).length
-  const highTreatmentRisk = patients.filter(p => p.treatmentRisk >= 4).length
+  const highAbandonmentRisk = filteredPatients.filter(p => p.abandonmentRisk >= 4).length
+  const highTreatmentRisk = filteredPatients.filter(p => p.treatmentRisk >= 4).length
 
-  // Calculate average attendance rate
-  const avgAttendanceRate = Math.round(
-    patients.reduce((sum, p) => sum + p.appointmentRate, 0) / patients.length
-  )
-
-  // Generate alert evolution data based on time period
+  // Generate alert evolution data based on date range
   const alertEvolutionData = useMemo(() => {
-    const days = parseInt(timePeriod)
+    const days = daysInRange
     const dataPoints = Math.min(days, 12) // Max 12 data points
     const interval = Math.floor(days / dataPoints)
     
     return Array.from({ length: dataPoints }, (_, i) => {
-      const dayLabel = days <= 14 ? `Día ${(i + 1) * interval}` : `Sem ${i + 1}`
+      const dayLabel = days <= 14 ? `Dia ${(i + 1) * interval}` : `Sem ${i + 1}`
       // Simulate historical data with some variance
       const abandonmentBase = highAbandonmentRisk
       const treatmentBase = highTreatmentRisk
@@ -80,7 +79,7 @@ export function OverviewSection() {
         treatmentRisk: Math.max(0, treatmentBase + (i < dataPoints / 2 ? -variance : variance))
       }
     })
-  }, [timePeriod, highAbandonmentRisk, highTreatmentRisk])
+  }, [daysInRange, highAbandonmentRisk, highTreatmentRisk])
 
   if (selectedPatient) {
     return (
@@ -98,88 +97,83 @@ export function OverviewSection() {
       {/* Page Header with Filters */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Monitoreo de pacientes con tratamiento para obesidad</h1>
+          <h1 className="text-2xl font-bold text-foreground">Alertas y Riesgos</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-muted-foreground">
+              Monitoreo de pacientes en riesgo
+            </p>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+              <Activity className="h-3 w-3" />
+              {treatmentLabel}
+            </span>
+          </div>
         </div>
         
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <Select value={timePeriod} onValueChange={setTimePeriod}>
-              <SelectTrigger className="w-[160px] bg-card">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Últimos 7 días</SelectItem>
-                <SelectItem value="14">Últimos 14 días</SelectItem>
-                <SelectItem value="30">Últimos 30 días</SelectItem>
-                <SelectItem value="90">Últimos 90 días</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-muted-foreground" />
-            <Select value={treatmentType} onValueChange={setTreatmentType}>
-              <SelectTrigger className="w-[160px] bg-card">
-                <SelectValue placeholder="Tratamiento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="obesity">Obesidad</SelectItem>
-                <SelectItem value="diabetes">Diabetes</SelectItem>
-                <SelectItem value="hypertension">Hipertensión</SelectItem>
-                <SelectItem value="all">Todos</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        <KPICard
-          title="Pacientes"
-          value={metrics.totalPatients}
-          icon={<Users className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Adherencia Prom."
-          value={`${metrics.avgAdherence}%`}
-          trend={Number(metrics.avgAdherence) >= 80 ? "up" : "down"}
-          trendValue="Meta: 80%"
-          icon={<Activity className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Asistencia Prom."
-          value={`${avgAttendanceRate}%`}
-          trend={avgAttendanceRate >= 80 ? "up" : "down"}
-          trendValue="Meta: 80%"
-          icon={<CalendarCheck className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Cambio IMC Prom."
-          value={`${metrics.avgBmiChange}%`}
-          trend="down"
-          trendValue="Reducción"
-          icon={<TrendingDown className="h-4 w-4" />}
-          variant="success"
-          invertTrendColor
-        />
-        <KPICard
-          title="Motivación Prom."
-          value={`${metrics.avgMotivation}/5`}
-          icon={<Brain className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Síntomas Totales"
-          value={metrics.totalSymptoms}
-          icon={<Stethoscope className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Ánimo Prom."
-          value={`${metrics.avgMood}/5`}
-          icon={<Heart className="h-4 w-4" />}
-        />
+        {/* Date Range Filter */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2 text-sm bg-card">
+              <CalendarIcon className="h-4 w-4" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "dd MMM", { locale: es })} - {format(dateRange.to, "dd MMM yyyy", { locale: es })}
+                  </>
+                ) : (
+                  format(dateRange.from, "dd MMM yyyy", { locale: es })
+                )
+              ) : (
+                "Seleccionar periodo"
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <div className="p-3 border-b border-border">
+              <p className="text-sm font-medium text-foreground">Seleccionar rango</p>
+              <div className="flex gap-2 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setDateRange({
+                    from: new Date(new Date().setDate(new Date().getDate() - 7)),
+                    to: new Date()
+                  })}
+                >
+                  7 dias
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setDateRange({
+                    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+                    to: new Date()
+                  })}
+                >
+                  30 dias
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setDateRange({
+                    from: new Date(new Date().setMonth(new Date().getMonth() - 3)),
+                    to: new Date()
+                  })}
+                >
+                  3 meses
+                </Button>
+              </div>
+            </div>
+            <CalendarComponent
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+              locale={es}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Alert/Risk Cards */}
@@ -233,7 +227,7 @@ export function OverviewSection() {
       <Card className="border-border" style={{ backgroundColor: "var(--chart-panel-bg)" }}>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-foreground">
-            Evolución de Alertas - Últimos {timePeriod} días
+            Evolucion de Alertas - Ultimos {daysInRange} dias
           </CardTitle>
         </CardHeader>
         <CardContent>

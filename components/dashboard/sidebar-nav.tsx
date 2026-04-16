@@ -2,29 +2,44 @@
 
 import { cn } from "@/lib/utils"
 import { 
-  LayoutDashboard, 
+  AlertTriangle, 
   Users, 
-  Calendar,
   Heart,
   Sun,
-  Moon
+  Moon,
+  LogOut
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/components/theme-provider"
 import { useState, useEffect } from "react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface SidebarNavProps {
   activeSection: string
   onSectionChange: (section: string) => void
+  treatmentType: string
+  onTreatmentChange: (treatment: string) => void
 }
 
-const navItems = [
-  { id: "overview", label: "Resumen", icon: LayoutDashboard },
-  { id: "patients", label: "Pacientes", icon: Users },
-  { id: "appointments", label: "Citas", icon: Calendar },
+const treatmentOptions = [
+  { value: "obesity", label: "Obesidad" },
+  { value: "diabetes", label: "Diabetes" },
+  { value: "hypertension", label: "Hipertension" },
+  { value: "all", label: "Todos" },
 ]
 
-export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) {
+const navItems = [
+  { id: "patients", label: "Pacientes", icon: Users },
+  { id: "overview", label: "Alertas", icon: AlertTriangle },
+]
+
+export function SidebarNav({ activeSection, onSectionChange, treatmentType, onTreatmentChange }: SidebarNavProps) {
   const { theme, toggleTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -32,6 +47,8 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const currentTreatmentLabel = treatmentOptions.find(t => t.value === treatmentType)?.label || "Obesidad"
 
   return (
     <aside className="w-56 bg-sidebar border-r border-sidebar-border flex flex-col h-screen md:fixed md:left-0 md:top-0">
@@ -46,6 +63,25 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
             <p className="text-xs text-muted-foreground">Dashboards</p>
           </div>
         </div>
+      </div>
+
+      {/* Treatment Type Selector */}
+      <div className="p-3 border-b border-sidebar-border">
+        <p className="text-xs text-muted-foreground mb-2 px-1">Tipo de tratamiento</p>
+        <Select value={treatmentType} onValueChange={onTreatmentChange}>
+          <SelectTrigger className="w-full bg-sidebar-accent/50 border-sidebar-border text-sidebar-foreground">
+            <SelectValue placeholder="Seleccionar tratamiento">
+              {currentTreatmentLabel}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {treatmentOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Navigation */}
@@ -71,7 +107,7 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
       </nav>
 
       {/* Footer */}
-      <div className="p-3 border-t border-sidebar-border">
+      <div className="p-3 border-t border-sidebar-border space-y-2">
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -88,10 +124,17 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
           )}
           {mounted ? (theme === "dark" ? "Modo claro" : "Modo oscuro") : "Cambiar tema"}
         </Button>
-        <div className="mt-3 px-3 py-2 rounded-lg bg-muted/50">
-          <p className="text-xs text-muted-foreground">Dr. Juan Pérez</p>
-          <p className="text-xs text-primary">Endocrinología</p>
+        <div className="px-3 py-2 rounded-lg bg-muted/50">
+          <p className="text-xs text-muted-foreground">Dr. Juan Perez</p>
+          <p className="text-xs text-primary">Endocrinologia</p>
         </div>
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+        >
+          <LogOut className="h-4 w-4" />
+          Cerrar sesion
+        </Button>
       </div>
     </aside>
   )

@@ -1,44 +1,59 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { SidebarNav } from "@/components/dashboard/sidebar-nav"
 import { OverviewSection } from "@/components/dashboard/overview-section"
 import { PatientsTable } from "@/components/dashboard/patients-table"
 import { PatientDetail } from "@/components/dashboard/patient-detail"
-import { KPICard } from "@/components/dashboard/kpi-card"
-import { patients, aggregateMetrics } from "@/lib/mock-data"
+
+import { patients } from "@/lib/mock-data"
 import type { Patient } from "@/lib/mock-data"
 import { 
-  Calendar, 
   Menu,
   Heart,
   Search,
-  AlertTriangle
+  Activity
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
+
 
 // Patients Section with Search
-function PatientsSection({ onSelectPatient }: { onSelectPatient: (patient: Patient) => void }) {
+function PatientsSection({ 
+  onSelectPatient, 
+  patients: patientsList,
+  treatmentType,
+  treatmentLabel
+}: { 
+  onSelectPatient: (patient: Patient) => void
+  patients: Patient[]
+  treatmentType: string
+  treatmentLabel: string
+}) {
   const [searchQuery, setSearchQuery] = useState("")
 
   const filteredPatients = useMemo(() => {
-    if (!searchQuery.trim()) return patients
+    if (!searchQuery.trim()) return patientsList
     const query = searchQuery.toLowerCase().trim()
-    return patients.filter(p => p.name.toLowerCase().includes(query))
-  }, [searchQuery])
+    return patientsList.filter(p => p.name.toLowerCase().includes(query))
+  }, [searchQuery, patientsList])
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Pacientes</h1>
-          <p className="text-sm text-muted-foreground">
-            Gestión y seguimiento de todos los pacientes
-          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-muted-foreground">
+              Gestion y seguimiento de pacientes
+            </p>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+              <Activity className="h-3 w-3" />
+              {treatmentLabel}
+            </span>
+          </div>
         </div>
         
         {/* Search Input */}
@@ -72,11 +87,46 @@ function PatientsSection({ onSelectPatient }: { onSelectPatient: (patient: Patie
   )
 }
 
+const treatmentLabels: Record<string, string> = {
+  obesity: "Obesidad",
+  diabetes: "Diabetes",
+  hypertension: "Hipertension",
+  all: "Todos los tratamientos"
+}
+
 export default function DashboardPage() {
-  const [activeSection, setActiveSection] = useState("overview")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  const [activeSection, setActiveSection] = useState("patients")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const metrics = aggregateMetrics()
+  const [treatmentType, setTreatmentType] = useState(() => {
+    return searchParams.get("treatment") || "obesity"
+  })
+
+  // Sync treatment type with URL
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("treatment", treatmentType)
+    router.replace(`?${params.toString()}`, { scroll: false })
+  }, [treatmentType, router, searchParams])
+
+  // Handle treatment change with navigation logic
+  const handleTreatmentChange = (newTreatment: string) => {
+    setTreatmentType(newTreatment)
+    // If on Alerts view, redirect to Patients
+    if (activeSection === "overview") {
+      setActiveSection("patients")
+      setSelectedPatient(null)
+    }
+  }
+
+  // Filter patients by treatment type
+  const filteredPatients = useMemo(() => {
+    if (treatmentType === "all") return patients
+    return patients.filter(p => p.treatmentType === treatmentType)
+  }, [treatmentType])
 
   const renderContent = () => {
     if (selectedPatient) {
@@ -90,91 +140,21 @@ export default function DashboardPage() {
 
     switch (activeSection) {
       case "overview":
-        return <OverviewSection />
+        return <OverviewSection patients={filteredPatients} treatmentLabel={treatmentLabels[treatmentType]} />
       
       case "patients":
-        return <PatientsSection onSelectPatient={setSelectedPatient} />
-      
-      case "appointments":
         return (
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Citas Médicas</h1>
-              <p className="text-sm text-muted-foreground">
-                Gestión de eventos y citas programadas
-              </p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <KPICard
-                title="Citas Totales"
-                value={patients.reduce((sum, p) => sum + p.appointmentsTotal, 0)}
-                icon={<Calendar className="h-4 w-4" />}
-              />
-              <KPICard
-                title="Asistencia Promedio"
-                value={`${Math.round(patients.reduce((sum, p) => sum + p.appointmentRate, 0) / patients.length)}%`}
-                trend="up"
-                trendValue="Buen cumplimiento"
-                variant="success"
-              />
-              <KPICard
-                title="Citas Perdidas"
-                value={patients.reduce((sum, p) => sum + p.missedEvents + p.cancelledEvents, 0)}
-                variant="warning"
-              />
-            </div>
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-foreground">Asistencia por Paciente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {patients.map(patient => (
-                    <div 
-                      key={patient.id} 
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => setSelectedPatient(patient)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-medium">
-                          {patient.avatar}
-                        </div>
-                        <div>
-                          <p className="font-medium text-foreground">{patient.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {patient.appointmentsAttended}/{patient.appointmentsTotal} citas asistidas
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {/* Alert indicator for high-risk patients with missed events */}
-                        {(patient.missedEvents + patient.cancelledEvents) >= 2 && patient.abandonmentRisk >= 3 && (
-                          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-destructive/10 border border-destructive/30">
-                            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-                            <span className="text-xs font-medium text-destructive">Alerta</span>
-                          </div>
-                        )}
-                        <div className="text-right">
-                          <p className={cn(
-                            "font-mono text-sm",
-                            patient.appointmentRate >= 80 ? "text-success" : 
-                            patient.appointmentRate >= 60 ? "text-warning" : "text-destructive"
-                          )}>
-                            {patient.appointmentRate}%
-                          </p>
-                          <p className="text-xs text-muted-foreground">Asistencia</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <PatientsSection 
+            onSelectPatient={setSelectedPatient} 
+            patients={filteredPatients}
+            treatmentType={treatmentType}
+            treatmentLabel={treatmentLabels[treatmentType]}
+          />
         )
       
+      
       default:
-        return <OverviewSection />
+        return <OverviewSection patients={filteredPatients} treatmentLabel={treatmentLabels[treatmentType]} />
     }
   }
 
@@ -187,7 +167,9 @@ export default function DashboardPage() {
           onSectionChange={(section) => {
             setActiveSection(section)
             setSelectedPatient(null)
-          }} 
+          }}
+          treatmentType={treatmentType}
+          onTreatmentChange={handleTreatmentChange}
         />
       </div>
 
@@ -216,7 +198,12 @@ export default function DashboardPage() {
                   setActiveSection(section)
                   setSelectedPatient(null)
                   setMobileMenuOpen(false)
-                }} 
+                }}
+                treatmentType={treatmentType}
+                onTreatmentChange={(treatment) => {
+                  handleTreatmentChange(treatment)
+                  setMobileMenuOpen(false)
+                }}
               />
             </SheetContent>
           </Sheet>
