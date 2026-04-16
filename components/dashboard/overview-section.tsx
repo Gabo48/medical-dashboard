@@ -4,15 +4,8 @@
 import { PatientsTable } from "./patients-table"
 import { PatientDetail } from "./patient-detail"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { patients } from "@/lib/mock-data"
 import type { Patient } from "@/lib/mock-data"
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
@@ -37,13 +30,17 @@ import {
   Legend
 } from "recharts"
 
-export function OverviewSection() {
+interface OverviewSectionProps {
+  patients: Patient[]
+  treatmentLabel: string
+}
+
+export function OverviewSection({ patients: filteredPatients, treatmentLabel }: OverviewSectionProps) {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date()
   })
-  const [treatmentType, setTreatmentType] = useState("obesity")
 
   // Calculate days in range for display
   const daysInRange = dateRange?.from && dateRange?.to 
@@ -51,7 +48,7 @@ export function OverviewSection() {
     : 30
 
   // Filter critical patients (abandonment risk >= 4 OR treatment risk >= 4)
-  const criticalPatients = patients
+  const criticalPatients = filteredPatients
     .filter(p => p.abandonmentRisk >= 4 || p.treatmentRisk >= 4)
     .sort((a, b) => {
       // Sort by highest risk (abandonment or treatment) descending
@@ -60,8 +57,8 @@ export function OverviewSection() {
       return bMaxRisk - aMaxRisk
     })
 
-  const highAbandonmentRisk = patients.filter(p => p.abandonmentRisk >= 4).length
-  const highTreatmentRisk = patients.filter(p => p.treatmentRisk >= 4).length
+  const highAbandonmentRisk = filteredPatients.filter(p => p.abandonmentRisk >= 4).length
+  const highTreatmentRisk = filteredPatients.filter(p => p.treatmentRisk >= 4).length
 
   // Generate alert evolution data based on date range
   const alertEvolutionData = useMemo(() => {
@@ -101,90 +98,82 @@ export function OverviewSection() {
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Alertas y Riesgos</h1>
-        </div>
-        
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2 text-sm bg-card">
-                <CalendarIcon className="h-4 w-4" />
-                {dateRange?.from ? (
-                  dateRange.to ? (
-                    <>
-                      {format(dateRange.from, "dd MMM", { locale: es })} - {format(dateRange.to, "dd MMM yyyy", { locale: es })}
-                    </>
-                  ) : (
-                    format(dateRange.from, "dd MMM yyyy", { locale: es })
-                  )
-                ) : (
-                  "Seleccionar periodo"
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <div className="p-3 border-b border-border">
-                <p className="text-sm font-medium text-foreground">Seleccionar rango</p>
-                <div className="flex gap-2 mt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setDateRange({
-                      from: new Date(new Date().setDate(new Date().getDate() - 7)),
-                      to: new Date()
-                    })}
-                  >
-                    7 dias
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setDateRange({
-                      from: new Date(new Date().setDate(new Date().getDate() - 30)),
-                      to: new Date()
-                    })}
-                  >
-                    30 dias
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setDateRange({
-                      from: new Date(new Date().setMonth(new Date().getMonth() - 3)),
-                      to: new Date()
-                    })}
-                  >
-                    3 meses
-                  </Button>
-                </div>
-              </div>
-              <CalendarComponent
-                initialFocus
-                mode="range"
-                defaultMonth={dateRange?.from}
-                selected={dateRange}
-                onSelect={setDateRange}
-                numberOfMonths={2}
-                locale={es}
-              />
-            </PopoverContent>
-          </Popover>
-          
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-muted-foreground" />
-            <Select value={treatmentType} onValueChange={setTreatmentType}>
-              <SelectTrigger className="w-[160px] bg-card">
-                <SelectValue placeholder="Tratamiento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="obesity">Obesidad</SelectItem>
-                <SelectItem value="diabetes">Diabetes</SelectItem>
-                <SelectItem value="hypertension">Hipertensión</SelectItem>
-                <SelectItem value="all">Todos</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-sm text-muted-foreground">
+              Monitoreo de pacientes en riesgo
+            </p>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+              <Activity className="h-3 w-3" />
+              {treatmentLabel}
+            </span>
           </div>
         </div>
+        
+        {/* Date Range Filter */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2 text-sm bg-card">
+              <CalendarIcon className="h-4 w-4" />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    {format(dateRange.from, "dd MMM", { locale: es })} - {format(dateRange.to, "dd MMM yyyy", { locale: es })}
+                  </>
+                ) : (
+                  format(dateRange.from, "dd MMM yyyy", { locale: es })
+                )
+              ) : (
+                "Seleccionar periodo"
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <div className="p-3 border-b border-border">
+              <p className="text-sm font-medium text-foreground">Seleccionar rango</p>
+              <div className="flex gap-2 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setDateRange({
+                    from: new Date(new Date().setDate(new Date().getDate() - 7)),
+                    to: new Date()
+                  })}
+                >
+                  7 dias
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setDateRange({
+                    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+                    to: new Date()
+                  })}
+                >
+                  30 dias
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setDateRange({
+                    from: new Date(new Date().setMonth(new Date().getMonth() - 3)),
+                    to: new Date()
+                  })}
+                >
+                  3 meses
+                </Button>
+              </div>
+            </div>
+            <CalendarComponent
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={setDateRange}
+              numberOfMonths={2}
+              locale={es}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Alert/Risk Cards */}

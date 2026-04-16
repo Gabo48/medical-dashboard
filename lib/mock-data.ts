@@ -25,6 +25,7 @@ export interface Patient {
   messagesCount: number
   treatmentDays: number
   avatar: string
+  treatmentType: "obesity" | "diabetes" | "hypertension"
 }
 
 export interface WeightHistory {
@@ -79,7 +80,8 @@ export const patients: Patient[] = [
     lastInteraction: "2024-01-15",
     messagesCount: 156,
     treatmentDays: 90,
-    avatar: "MG"
+    avatar: "MG",
+    treatmentType: "obesity"
   },
   {
     id: "P002",
@@ -107,7 +109,8 @@ export const patients: Patient[] = [
     lastInteraction: "2024-01-10",
     messagesCount: 45,
     treatmentDays: 75,
-    avatar: "CR"
+    avatar: "CR",
+    treatmentType: "obesity"
   },
   {
     id: "P003",
@@ -135,7 +138,8 @@ export const patients: Patient[] = [
     lastInteraction: "2024-01-15",
     messagesCount: 234,
     treatmentDays: 120,
-    avatar: "AM"
+    avatar: "AM",
+    treatmentType: "diabetes"
   },
   {
     id: "P004",
@@ -163,7 +167,8 @@ export const patients: Patient[] = [
     lastInteraction: "2024-01-14",
     messagesCount: 78,
     treatmentDays: 60,
-    avatar: "RS"
+    avatar: "RS",
+    treatmentType: "hypertension"
   },
   {
     id: "P005",
@@ -191,7 +196,8 @@ export const patients: Patient[] = [
     lastInteraction: "2024-01-05",
     messagesCount: 12,
     treatmentDays: 45,
-    avatar: "LF"
+    avatar: "LF",
+    treatmentType: "obesity"
   },
   {
     id: "P006",
@@ -219,7 +225,8 @@ export const patients: Patient[] = [
     lastInteraction: "2024-01-15",
     messagesCount: 189,
     treatmentDays: 100,
-    avatar: "MT"
+    avatar: "MT",
+    treatmentType: "diabetes"
   }
 ]
 
