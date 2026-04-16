@@ -6,7 +6,7 @@ import { OverviewSection } from "@/components/dashboard/overview-section"
 import { PatientsTable } from "@/components/dashboard/patients-table"
 import { PatientDetail } from "@/components/dashboard/patient-detail"
 
-import { patients, aggregateMetrics } from "@/lib/mock-data"
+import { patients } from "@/lib/mock-data"
 import type { Patient } from "@/lib/mock-data"
 import { 
   Menu,
@@ -70,10 +70,9 @@ function PatientsSection({ onSelectPatient }: { onSelectPatient: (patient: Patie
 }
 
 export default function DashboardPage() {
-  const [activeSection, setActiveSection] = useState("overview")
+  const [activeSection, setActiveSection] = useState("patients")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const metrics = aggregateMetrics()
 
   const renderContent = () => {
     if (selectedPatient) {

@@ -1,10 +1,10 @@
 "use client"
 
-import { KPICard } from "./kpi-card"
+
 import { PatientsTable } from "./patients-table"
 import { PatientDetail } from "./patient-detail"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { patients, aggregateMetrics } from "@/lib/mock-data"
+import { patients } from "@/lib/mock-data"
 import type { Patient } from "@/lib/mock-data"
 import { 
   Select,
@@ -20,16 +20,10 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import type { DateRange } from "react-day-picker"
 import { 
-  Users, 
-  TrendingDown, 
   Activity, 
   AlertTriangle, 
-  Stethoscope,
-  Heart,
-  Brain,
   Calendar as CalendarIcon,
-  ShieldAlert,
-  CalendarCheck
+  ShieldAlert
 } from "lucide-react"
 import { useState, useMemo } from "react"
 import { 
@@ -50,7 +44,6 @@ export function OverviewSection() {
     to: new Date()
   })
   const [treatmentType, setTreatmentType] = useState("obesity")
-  const metrics = aggregateMetrics()
 
   // Calculate days in range for display
   const daysInRange = dateRange?.from && dateRange?.to 
@@ -69,11 +62,6 @@ export function OverviewSection() {
 
   const highAbandonmentRisk = patients.filter(p => p.abandonmentRisk >= 4).length
   const highTreatmentRisk = patients.filter(p => p.treatmentRisk >= 4).length
-
-  // Calculate average attendance rate
-  const avgAttendanceRate = Math.round(
-    patients.reduce((sum, p) => sum + p.appointmentRate, 0) / patients.length
-  )
 
   // Generate alert evolution data based on date range
   const alertEvolutionData = useMemo(() => {
@@ -112,7 +100,7 @@ export function OverviewSection() {
       {/* Page Header with Filters */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Monitoreo de pacientes con tratamiento para obesidad</h1>
+          <h1 className="text-2xl font-bold text-foreground">Alertas y Riesgos</h1>
         </div>
         
         {/* Filters */}
@@ -197,53 +185,6 @@ export function OverviewSection() {
             </Select>
           </div>
         </div>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-        <KPICard
-          title="Pacientes"
-          value={metrics.totalPatients}
-          icon={<Users className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Adherencia Prom."
-          value={`${metrics.avgAdherence}%`}
-          trend={Number(metrics.avgAdherence) >= 80 ? "up" : "down"}
-          trendValue="Meta: 80%"
-          icon={<Activity className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Asistencia Prom."
-          value={`${avgAttendanceRate}%`}
-          trend={avgAttendanceRate >= 80 ? "up" : "down"}
-          trendValue="Meta: 80%"
-          icon={<CalendarCheck className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Cambio IMC Prom."
-          value={`${metrics.avgBmiChange}%`}
-          trend="down"
-          trendValue="Reducción"
-          icon={<TrendingDown className="h-4 w-4" />}
-          variant="success"
-          invertTrendColor
-        />
-        <KPICard
-          title="Motivación Prom."
-          value={`${metrics.avgMotivation}/5`}
-          icon={<Brain className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Síntomas Totales"
-          value={metrics.totalSymptoms}
-          icon={<Stethoscope className="h-4 w-4" />}
-        />
-        <KPICard
-          title="Ánimo Prom."
-          value={`${metrics.avgMood}/5`}
-          icon={<Heart className="h-4 w-4" />}
-        />
       </div>
 
       {/* Alert/Risk Cards */}

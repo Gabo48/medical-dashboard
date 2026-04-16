@@ -350,53 +350,6 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             </Card>
           </div>
 
-          {/* Adherence & Appointments */}
-          <Card className="bg-card border-border">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Adherencia y Asistencia</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Adherencia al tratamiento</span>
-                  <span className="text-sm font-medium text-foreground">{patient.adherence}%</span>
-                </div>
-                <Progress value={patient.adherence} className="h-2 bg-muted" />
-              </div>
-              <Separator className="bg-border" />
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="flex items-center justify-center gap-1 text-success">
-                    <CalendarCheck className="h-4 w-4" />
-                    <span className="text-lg font-bold">{patient.appointmentsAttended}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Asistidas</p>
-                </div>
-                <div>
-                  <div className="flex items-center justify-center gap-1 text-warning">
-                    <CalendarX className="h-4 w-4" />
-                    <span className="text-lg font-bold">{patient.cancelledEvents}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Canceladas</p>
-                </div>
-                <div>
-                  <div className="flex items-center justify-center gap-1 text-destructive">
-                    <CalendarIcon className="h-4 w-4" />
-                    <span className="text-lg font-bold">{patient.missedEvents}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">No asistidas</p>
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Tasa de asistencia</span>
-                  <span className="text-sm font-medium text-foreground">{patient.appointmentRate}%</span>
-                </div>
-                <Progress value={patient.appointmentRate} className="h-2 bg-muted" />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Emotional State */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-2">
@@ -446,6 +399,53 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
         {/* Statistics Tab */}
         <TabsContent value="stats" className="space-y-4 mt-4">
+          {/* Adherence & Appointments */}
+          <Card className="bg-card border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-foreground">Adherencia y Asistencia</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Adherencia al tratamiento</span>
+                  <span className="text-sm font-medium text-foreground">{patient.adherence}%</span>
+                </div>
+                <Progress value={patient.adherence} className="h-2 bg-muted" />
+              </div>
+              <Separator className="bg-border" />
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="flex items-center justify-center gap-1 text-success">
+                    <CalendarCheck className="h-4 w-4" />
+                    <span className="text-lg font-bold">{patient.appointmentsAttended}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Asistidas</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-center gap-1 text-warning">
+                    <CalendarX className="h-4 w-4" />
+                    <span className="text-lg font-bold">{patient.cancelledEvents}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Canceladas</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-center gap-1 text-destructive">
+                    <CalendarIcon className="h-4 w-4" />
+                    <span className="text-lg font-bold">{patient.missedEvents}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">No asistidas</p>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Tasa de asistencia</span>
+                  <span className="text-sm font-medium text-foreground">{patient.appointmentRate}%</span>
+                </div>
+                <Progress value={patient.appointmentRate} className="h-2 bg-muted" />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Interaction with Sarah & Medical Events */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="bg-card border-border">
