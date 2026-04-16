@@ -15,6 +15,9 @@ import { SideEffectsChart } from "./side-effects-chart"
 import { SymptomsList } from "./symptoms-list"
 import { InteractionsTable } from "./interactions-table"
 import { IntentsByType } from "./intents-by-type"
+import { ClinicalRecordCard } from "./clinical-record-card"
+import { MedicationPlanCard } from "./medication-plan-card"
+import { MessagingPanel } from "./messaging-panel"
 import type { Patient } from "@/lib/mock-data"
 import { 
   getWeightHistory, 
@@ -26,7 +29,11 @@ import {
   getSideEffectsReport,
   getPatientInteractions,
   getPatientIntents,
-  getMedicalEventFrequency
+  getMedicalEventFrequency,
+  getPatientClinicalRecord,
+  getPatientMedicationPlan,
+  getPatientMessages,
+  getPatientCaregivers
 } from "@/lib/mock-data"
 import { 
   Scale, 
@@ -61,6 +68,10 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
   const interactions = getPatientInteractions(patient.id)
   const patientIntents = getPatientIntents(patient.id)
   const medicalEventFrequency = getMedicalEventFrequency(patient.id)
+  const clinicalRecord = getPatientClinicalRecord(patient.id)
+  const medicationPlan = getPatientMedicationPlan(patient.id)
+  const patientMessages = getPatientMessages(patient.id)
+  const caregivers = getPatientCaregivers(patient.id)
 
   // Calculate days without registering (simulated based on last interaction)
   const lastInteractionDate = new Date(patient.lastInteraction)
@@ -314,6 +325,31 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Clinical Record & Medication Plan */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ClinicalRecordCard 
+          record={clinicalRecord} 
+          patient={patient}
+          onImport={(externalId) => console.log("[v0] Import clinical record:", externalId)}
+          onRefresh={() => console.log("[v0] Refresh clinical record")}
+        />
+        <MedicationPlanCard 
+          plan={medicationPlan}
+          patientId={patient.id}
+          onUpdateMedication={(medId, updates) => console.log("[v0] Update medication:", medId, updates)}
+          onAddMedication={(med) => console.log("[v0] Add medication:", med)}
+          onUpdateNotes={(notes) => console.log("[v0] Update notes:", notes)}
+        />
+      </div>
+
+      {/* Messaging Panel */}
+      <MessagingPanel
+        patient={patient}
+        messages={patientMessages}
+        caregivers={caregivers}
+        onSendMessage={(msg) => console.log("[v0] Send message:", msg)}
+      />
 
       {/* Interaction with Sarah & Medical Events */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
