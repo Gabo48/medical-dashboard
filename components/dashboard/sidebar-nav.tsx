@@ -4,14 +4,14 @@ import { cn } from "@/lib/utils"
 import { 
   LayoutDashboard, 
   Users, 
-  Activity, 
-  AlertTriangle,
   Calendar,
-  MessageSquare,
-  Settings,
-  Heart
+  Heart,
+  Sun,
+  Moon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTheme } from "@/components/theme-provider"
+import { useState, useEffect } from "react"
 
 interface SidebarNavProps {
   activeSection: string
@@ -21,13 +21,18 @@ interface SidebarNavProps {
 const navItems = [
   { id: "overview", label: "Resumen", icon: LayoutDashboard },
   { id: "patients", label: "Pacientes", icon: Users },
-  { id: "alerts", label: "Alertas", icon: AlertTriangle },
-  { id: "metrics", label: "Métricas", icon: Activity },
   { id: "appointments", label: "Citas", icon: Calendar },
-  { id: "interactions", label: "Interacciones", icon: MessageSquare },
 ]
 
 export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) {
+  const { theme, toggleTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch by only rendering theme-dependent UI after mount
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   return (
     <aside className="w-56 bg-sidebar border-r border-sidebar-border flex flex-col h-screen md:fixed md:left-0 md:top-0">
       {/* Logo */}
@@ -37,8 +42,8 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
             <Heart className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">MedTrack</h1>
-            <p className="text-xs text-muted-foreground">Obesidad</p>
+            <h1 className="text-lg font-bold text-sidebar-foreground">Sarah</h1>
+            <p className="text-xs text-muted-foreground">Dashboards</p>
           </div>
         </div>
       </div>
@@ -70,9 +75,18 @@ export function SidebarNav({ activeSection, onSectionChange }: SidebarNavProps) 
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          onClick={toggleTheme}
         >
-          <Settings className="h-4 w-4" />
-          Configuración
+          {mounted ? (
+            theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )
+          ) : (
+            <Sun className="h-4 w-4" />
+          )}
+          {mounted ? (theme === "dark" ? "Modo claro" : "Modo oscuro") : "Cambiar tema"}
         </Button>
         <div className="mt-3 px-3 py-2 rounded-lg bg-muted/50">
           <p className="text-xs text-muted-foreground">Dr. Juan Pérez</p>

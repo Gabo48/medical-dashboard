@@ -30,6 +30,17 @@
   --chart-3: #67778c;
   --chart-4: #e53935;
   --chart-5: #1f293b;
+  /* Specific chart colors for consistency */
+  --chart-adherence: #3b82f6;
+  --chart-target: #f97316;
+  --chart-mood: #22c55e;
+  --chart-motivation: #a855f7;
+  --chart-weight: #3b82f6;
+  --chart-bmi: #14b8a6;
+  /* Chart panel background */
+  --chart-panel-bg: #DFE2E8;
+  /* Grid colors */
+  --chart-grid: #9ca3af;
   --radius: 0.625rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #1f293b;
@@ -72,6 +83,17 @@
   --chart-3: #90a1b2;
   --chart-4: #e53935;
   --chart-5: #f1f6fa;
+  /* Specific chart colors for consistency (adjusted for dark mode visibility) */
+  --chart-adherence: #60a5fa;
+  --chart-target: #fb923c;
+  --chart-mood: #4ade80;
+  --chart-motivation: #c084fc;
+  --chart-weight: #60a5fa;
+  --chart-bmi: #2dd4bf;
+  /* Chart panel background */
+  --chart-panel-bg: #1C2436;
+  /* Grid colors */
+  --chart-grid: #4b5563;
   --sidebar: #1c2436;
   --sidebar-foreground: #f1f6fa;
   --sidebar-primary: #35b498;
@@ -113,6 +135,14 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-chart-adherence: var(--chart-adherence);
+  --color-chart-target: var(--chart-target);
+  --color-chart-mood: var(--chart-mood);
+  --color-chart-motivation: var(--chart-motivation);
+  --color-chart-weight: var(--chart-weight);
+  --color-chart-bmi: var(--chart-bmi);
+  --color-chart-panel-bg: var(--chart-panel-bg);
+  --color-chart-grid: var(--chart-grid);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
