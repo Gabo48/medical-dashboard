@@ -9,11 +9,13 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { AlertBadge, MoodBadge, EstadoEmocionalBadge } from "./alert-badge"
+import { AlertBadge, MoodBadge, EstadoEmocionalBadge, EstadoEmocionalInfoModal } from "./alert-badge"
 import { WeightChart } from "./weight-chart"
 import { AdherenceChart } from "./adherence-chart"
 import { MoodChart } from "./mood-chart"
 import { DailyAdherenceChart } from "./daily-adherence-chart"
+import { WeeklyAdherenceChart } from "./weekly-adherence-chart"
+import { AdherenceChartsContainer } from "./adherence-charts-container"
 import { WeeklyAdherenceChart } from "./weekly-adherence-chart"
 import { SideEffectsChart } from "./side-effects-chart"
 import { SymptomsList } from "./symptoms-list"
@@ -277,31 +279,6 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             <Card className="bg-card border-border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive" />
-                  Estado Emocional
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {(() => {
-                    const { label, color } = getEstadoEmocionalLevel(patient.estadoEmocional)
-                    return (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Puntuación GHQ-12</span>
-                          <span className="text-2xl font-bold text-foreground">{patient.estadoEmocional}/36</span>
-                        </div>
-                        <EstadoEmocionalBadge score={patient.estadoEmocional} size="md" />
-                      </>
-                    )
-                  })()}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card border-border">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
                   <ShieldAlert className="h-4 w-4 text-warning" />
                   Factores de Riesgo
                 </CardTitle>
@@ -348,13 +325,13 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
                             <span className="text-muted-foreground">Sin actividad reciente ({daysSinceLastActivity} dias)</span>
                           </div>
                         )}
-                        {patient.estadoEmocional >= 20 && (
+                        {patient.estadoEmocional >= 8 && (
                           <div className="flex items-center gap-2 text-sm">
                             <span className="w-2 h-2 rounded-full bg-destructive" />
                             <span className="text-muted-foreground">Malestar emocional elevado</span>
                           </div>
                         )}
-                        {avgAdherence >= 70 && patient.appointmentRate >= 70 && patient.mood > 2 && patient.motivation > 2 && patient.symptomsCount < 3 && daysSinceLastActivity <= 7 && patient.estadoEmocional < 20 && (
+                        {avgAdherence >= 70 && patient.appointmentRate >= 70 && patient.mood > 2 && patient.motivation > 2 && patient.symptomsCount < 3 && daysSinceLastActivity <= 7 && patient.estadoEmocional < 8 && (
                           <div className="flex items-center gap-2 text-sm text-success">
                             <span className="w-2 h-2 rounded-full bg-success" />
                             <span>Sin factores de riesgo identificados</span>
@@ -371,15 +348,23 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
           {/* Emotional State */}
           <Card className="bg-card border-border">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-foreground">Estado Emocional</CardTitle>
+              <CardTitle className="text-sm font-medium text-foreground flex items-center">
+                Estado Emocional
+                <EstadoEmocionalInfoModal />
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <MoodBadge value={patient.mood} />
                   <div>
                     <p className="text-xs text-muted-foreground">Animo</p>
-                    <p className="text-sm font-medium text-foreground">{patient.mood}/5</p>
+                    <p className="text-lg font-bold text-foreground" style={{
+                      color: patient.estadoEmocional <= 3 ? 'var(--success)' : 
+                             patient.estadoEmocional <= 7 ? 'var(--warning)' : 
+                             'var(--destructive)'
+                    }}>
+                      {patient.estadoEmocional}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
@@ -572,11 +557,11 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
           </div>
 
           {/* Adherence Charts */}
-          <DailyAdherenceChart data={dailyAdherence} />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <WeeklyAdherenceChart data={weeklyAdherence} />
-            <AdherenceChart data={adherenceHistory} title="Tendencia de Adherencia" />
-          </div>
+          <AdherenceChartsContainer 
+            dailyData={dailyAdherence}
+            weeklyData={weeklyAdherence}
+            adherenceHistoryData={adherenceHistory}
+          />
 
           {/* Side Effects Chart */}
           <SideEffectsChart data={sideEffects} />

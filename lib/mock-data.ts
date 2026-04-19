@@ -80,7 +80,7 @@ export const patients: Patient[] = [
     missedEvents: 1,
     symptomsCount: 2,
     symptomsSeverity: 1.5,
-    estadoEmocional: 8,
+    estadoEmocional: 1,
     lastInteraction: "2024-01-15",
     messagesCount: 156,
     treatmentDays: 90,
@@ -110,7 +110,7 @@ export const patients: Patient[] = [
     missedEvents: 2,
     symptomsCount: 4,
     symptomsSeverity: 2.2,
-    estadoEmocional: 22,
+    estadoEmocional: 8,
     lastInteraction: "2024-01-10",
     messagesCount: 45,
     treatmentDays: 75,
@@ -140,7 +140,7 @@ export const patients: Patient[] = [
     missedEvents: 0,
     symptomsCount: 0,
     symptomsSeverity: 0,
-    estadoEmocional: 6,
+    estadoEmocional: 2,
     lastInteraction: "2024-01-15",
     messagesCount: 234,
     treatmentDays: 120,
@@ -170,7 +170,7 @@ export const patients: Patient[] = [
     missedEvents: 1,
     symptomsCount: 3,
     symptomsSeverity: 2.0,
-    estadoEmocional: 18,
+    estadoEmocional: 6,
     lastInteraction: "2024-01-14",
     messagesCount: 78,
     treatmentDays: 60,
@@ -200,7 +200,7 @@ export const patients: Patient[] = [
     missedEvents: 2,
     symptomsCount: 5,
     symptomsSeverity: 2.5,
-    estadoEmocional: 28,
+    estadoEmocional: 10,
     lastInteraction: "2024-01-05",
     messagesCount: 12,
     treatmentDays: 45,
@@ -230,7 +230,7 @@ export const patients: Patient[] = [
     missedEvents: 0,
     symptomsCount: 1,
     symptomsSeverity: 1.0,
-    estadoEmocional: 10,
+    estadoEmocional: 3,
     lastInteraction: "2024-01-15",
     messagesCount: 189,
     treatmentDays: 100,
@@ -363,9 +363,9 @@ export const getMoodHistory = (patientId: string): MoodHistory[] => {
 export type EstadoEmocionalLevel = "sin_malestar" | "malestar_moderado" | "malestar_elevado"
 
 export const getEstadoEmocionalLevel = (score: number): { level: EstadoEmocionalLevel; label: string; color: string } => {
-  if (score <= 11) {
+  if (score <= 3) {
     return { level: "sin_malestar", label: "Sin malestar", color: "success" }
-  } else if (score <= 19) {
+  } else if (score <= 7) {
     return { level: "malestar_moderado", label: "Malestar moderado", color: "warning" }
   } else {
     return { level: "malestar_elevado", label: "Malestar elevado", color: "destructive" }

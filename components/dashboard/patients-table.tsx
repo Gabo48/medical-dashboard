@@ -20,6 +20,7 @@ import type { Patient } from "@/lib/mock-data"
 import { getPatientSymptoms, getEstadoEmocionalLevel } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { ArrowUpDown, ArrowUp, ArrowDown, HelpCircle, CalendarCheck, Stethoscope } from "lucide-react"
+import { EstadoEmocionalInfoModal, getEstadoEmocionalColorClass } from "./alert-badge"
 
 interface PatientsTableProps {
   patients: Patient[]
@@ -44,7 +45,7 @@ const columnDefinitions: Record<string, string> = {
   adherenceFarmacologica: "Cumplimiento de medicamentos, cuidados personales y persistencia en el tratamiento",
   appointmentRate: "Porcentaje y numero de citas medicas asistidas",
   symptomsCount: "Cantidad de sintomas reportados por el paciente",
-  estadoEmocional: "Puntuacion GHQ-12 del estado emocional del paciente (0-36)"
+  estadoEmocional: "Puntuacion GHQ-12 del estado emocional del paciente (0-12)"
 }
 type SortDirection = "asc" | "desc" | null
 
@@ -124,9 +125,10 @@ interface SortableHeaderProps {
   onSort: (key: SortKey) => void
   className?: string
   description?: string
+  showInfoModal?: boolean
 }
 
-function SortableHeader({ label, sortKey, currentSort, direction, onSort, className, description }: SortableHeaderProps) {
+function SortableHeader({ label, sortKey, currentSort, direction, onSort, className, description, showInfoModal }: SortableHeaderProps) {
   const isActive = currentSort === sortKey
   
   return (
@@ -137,17 +139,21 @@ function SortableHeader({ label, sortKey, currentSort, direction, onSort, classN
       )}
       onClick={() => onSort(sortKey)}
     >
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 justify-center">
         <span>{label}</span>
-        {description && (
-          <Tooltip>
-            <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <HelpCircle className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground" />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-[200px] text-xs">
-              {description}
-            </TooltipContent>
-          </Tooltip>
+        {showInfoModal ? (
+          <EstadoEmocionalInfoModal />
+        ) : (
+          description && (
+            <Tooltip>
+              <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <HelpCircle className="h-3 w-3 text-muted-foreground/60 hover:text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[200px] text-xs">
+                {description}
+              </TooltipContent>
+            </Tooltip>
+          )
         )}
         <span className={cn("transition-colors", isActive ? "text-foreground" : "text-muted-foreground/50")}>
           {isActive && direction === "asc" ? (
@@ -313,6 +319,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
               onSort={handleSort} 
               className="text-center"
               description={columnDefinitions.estadoEmocional}
+              showInfoModal={true}
             />
           </TableRow>
         </TableHeader>
@@ -430,26 +437,14 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
               </TableCell>
               <TableCell className="text-center py-3">
                 {(() => {
-                  const { level, label, color } = getEstadoEmocionalLevel(patient.estadoEmocional)
+                  const colorClass = getEstadoEmocionalColorClass(patient.estadoEmocional)
                   return (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex flex-col items-center gap-0.5 cursor-help">
-                          <span className={cn(
-                            "inline-flex items-center justify-center font-mono text-sm font-medium",
-                            color
-                          )}>
-                            {patient.estadoEmocional}/36
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {label}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {label} — GHQ-12: {patient.estadoEmocional}/36
-                      </TooltipContent>
-                    </Tooltip>
+                    <span className={cn(
+                      "inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm",
+                      colorClass
+                    )}>
+                      {patient.estadoEmocional}
+                    </span>
                   )
                 })()}
               </TableCell>
