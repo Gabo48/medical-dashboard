@@ -375,7 +375,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                   persistencia={patient.persistencia}
                 />
               </TableCell>
-              <TableCell className="text-center py-3 w-24">
+              <TableCell className="text-center py-3 px-4">
                 {(() => {
                   const colorClass = getEstadoEmocionalColorClass(patient.estadoEmocional)
                   return (
@@ -388,7 +388,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                   )
                 })()}
               </TableCell>
-              <TableCell className="text-center py-3 w-24">
+              <TableCell className="text-center py-3 px-4">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex flex-col items-center gap-0.5 cursor-help">
@@ -409,7 +409,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                   </TooltipContent>
                 </Tooltip>
               </TableCell>
-              <TableCell className="text-center py-3 w-24">
+              <TableCell className="text-center py-3 px-4">
                 {(() => {
                   const symptoms = getPatientSymptoms(patient.id)
                   const symptomsCount = symptoms.length
