@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { AlertBadge, MoodBadge } from "./alert-badge"
+import { AlertBadge, MoodBadge, EstadoEmocionalBadge } from "./alert-badge"
 import { WeightChart } from "./weight-chart"
 import { AdherenceChart } from "./adherence-chart"
 import { MoodChart } from "./mood-chart"
@@ -37,7 +37,8 @@ import {
   getPatientClinicalRecord,
   getPatientMedicationPlan,
   getPatientMessages,
-  getPatientCaregivers
+  getPatientCaregivers,
+  getEstadoEmocionalLevel
 } from "@/lib/mock-data"
 import { 
   Scale, 
@@ -276,20 +277,24 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             <Card className="bg-card border-border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  Niveles de Alerta
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  Estado Emocional
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Riesgo de Abandono</p>
-                    <AlertBadge level={patient.abandonmentRisk} type="abandonment" size="md" />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Riesgo de Tratamiento</p>
-                    <AlertBadge level={patient.treatmentRisk} type="treatment" size="md" />
-                  </div>
+                <div className="space-y-3">
+                  {(() => {
+                    const { label, color } = getEstadoEmocionalLevel(patient.estadoEmocional)
+                    return (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Puntuación GHQ-12</span>
+                          <span className="text-2xl font-bold text-foreground">{patient.estadoEmocional}/36</span>
+                        </div>
+                        <EstadoEmocionalBadge score={patient.estadoEmocional} size="md" />
+                      </>
+                    )
+                  })()}
                 </div>
               </CardContent>
             </Card>
@@ -297,54 +302,67 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             <Card className="bg-card border-border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <ShieldAlert className="h-4 w-4 text-destructive" />
+                  <ShieldAlert className="h-4 w-4 text-warning" />
                   Factores de Riesgo
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {patient.adherence < 70 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-destructive" />
-                      <span className="text-muted-foreground">Baja adherencia al tratamiento ({patient.adherence}%)</span>
-                    </div>
-                  )}
-                  {patient.appointmentRate < 70 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-warning" />
-                      <span className="text-muted-foreground">Tasa de asistencia baja ({patient.appointmentRate}%)</span>
-                    </div>
-                  )}
-                  {patient.mood <= 2 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-warning" />
-                      <span className="text-muted-foreground">Estado de animo bajo</span>
-                    </div>
-                  )}
-                  {patient.motivation <= 2 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-warning" />
-                      <span className="text-muted-foreground">Motivacion baja</span>
-                    </div>
-                  )}
-                  {patient.symptomsCount >= 3 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-destructive" />
-                      <span className="text-muted-foreground">Multiples sintomas reportados ({patient.symptomsCount})</span>
-                    </div>
-                  )}
-                  {daysSinceLastActivity > 7 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="w-2 h-2 rounded-full bg-destructive" />
-                      <span className="text-muted-foreground">Sin actividad reciente ({daysSinceLastActivity} dias)</span>
-                    </div>
-                  )}
-                  {patient.adherence >= 70 && patient.appointmentRate >= 70 && patient.mood > 2 && patient.motivation > 2 && patient.symptomsCount < 3 && daysSinceLastActivity <= 7 && (
-                    <div className="flex items-center gap-2 text-sm text-success">
-                      <span className="w-2 h-2 rounded-full bg-success" />
-                      <span>Sin factores de riesgo identificados</span>
-                    </div>
-                  )}
+                  {(() => {
+                    const avgAdherence = (patient.adherenceFarmacologica + patient.adherenciaCuidado + patient.persistencia) / 3
+                    return (
+                      <>
+                        {avgAdherence < 70 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-destructive" />
+                            <span className="text-muted-foreground">Baja adherencia al tratamiento ({Math.round(avgAdherence)}%)</span>
+                          </div>
+                        )}
+                        {patient.appointmentRate < 70 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-warning" />
+                            <span className="text-muted-foreground">Tasa de asistencia baja ({patient.appointmentRate}%)</span>
+                          </div>
+                        )}
+                        {patient.mood <= 2 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-warning" />
+                            <span className="text-muted-foreground">Estado de animo bajo</span>
+                          </div>
+                        )}
+                        {patient.motivation <= 2 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-warning" />
+                            <span className="text-muted-foreground">Motivacion baja</span>
+                          </div>
+                        )}
+                        {patient.symptomsCount >= 3 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-destructive" />
+                            <span className="text-muted-foreground">Multiples sintomas reportados ({patient.symptomsCount})</span>
+                          </div>
+                        )}
+                        {daysSinceLastActivity > 7 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-destructive" />
+                            <span className="text-muted-foreground">Sin actividad reciente ({daysSinceLastActivity} dias)</span>
+                          </div>
+                        )}
+                        {patient.estadoEmocional >= 20 && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="w-2 h-2 rounded-full bg-destructive" />
+                            <span className="text-muted-foreground">Malestar emocional elevado</span>
+                          </div>
+                        )}
+                        {avgAdherence >= 70 && patient.appointmentRate >= 70 && patient.mood > 2 && patient.motivation > 2 && patient.symptomsCount < 3 && daysSinceLastActivity <= 7 && patient.estadoEmocional < 20 && (
+                          <div className="flex items-center gap-2 text-sm text-success">
+                            <span className="w-2 h-2 rounded-full bg-success" />
+                            <span>Sin factores de riesgo identificados</span>
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()}
                 </div>
               </CardContent>
             </Card>
@@ -393,6 +411,48 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             />
           </div>
 
+          {/* Estado Emocional Explanation Panel */}
+          <Card className="bg-card border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-foreground">Cómo Interpretar Estado Emocional</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-success/10 border border-success/20">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-success/20 flex items-center justify-center">
+                    <span className="text-xs font-bold text-success">0-11</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Sin malestar significativo</p>
+                    <p className="text-xs text-muted-foreground mt-1">El paciente se adapta bien al tratamiento y muestra indicadores psicológicos positivos.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-warning/10 border border-warning/20">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-warning/20 flex items-center justify-center">
+                    <span className="text-xs font-bold text-warning">12-19</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Malestar moderado</p>
+                    <p className="text-xs text-muted-foreground mt-1">El paciente muestra cierto malestar; considere monitoreo e intervenciones de apoyo.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center">
+                    <span className="text-xs font-bold text-destructive">20-36</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground">Malestar elevado</p>
+                    <p className="text-xs text-muted-foreground mt-1">El paciente experimenta malestar psicológico significativo; se recomienda atención clínica inmediata.</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Symptoms Table */}
           <SymptomsList symptoms={symptoms} />
         </TabsContent>
@@ -407,10 +467,24 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             <CardContent className="space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Adherencia al tratamiento</span>
-                  <span className="text-sm font-medium text-foreground">{patient.adherence}%</span>
+                  <span className="text-sm text-muted-foreground">Adherencia Farmacológica</span>
+                  <span className="text-sm font-medium text-foreground">{patient.adherenceFarmacologica}%</span>
                 </div>
-                <Progress value={patient.adherence} className="h-2 bg-muted" />
+                <Progress value={patient.adherenceFarmacologica} className="h-2 bg-muted" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Adherencia al Cuidado</span>
+                  <span className="text-sm font-medium text-foreground">{patient.adherenciaCuidado}%</span>
+                </div>
+                <Progress value={patient.adherenciaCuidado} className="h-2 bg-muted" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Persistencia</span>
+                  <span className="text-sm font-medium text-foreground">{patient.persistencia}%</span>
+                </div>
+                <Progress value={patient.persistencia} className="h-2 bg-muted" />
               </div>
               <Separator className="bg-border" />
               <div className="grid grid-cols-3 gap-4 text-center">

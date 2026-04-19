@@ -63,3 +63,40 @@ export function MoodBadge({ value, showLabel = false }: MoodBadgeProps) {
     </span>
   )
 }
+
+interface EstadoEmocionalBadgeProps {
+  score: number
+  showLabel?: boolean
+  size?: "sm" | "md"
+}
+
+const estadoEmocionalConfig = {
+  "sin_malestar": { label: "Sin malestar", color: "bg-success text-success-foreground" },
+  "malestar_moderado": { label: "Malestar moderado", color: "bg-warning text-warning-foreground" },
+  "malestar_elevado": { label: "Malestar elevado", color: "bg-destructive text-destructive-foreground" }
+}
+
+export function EstadoEmocionalBadge({ score, showLabel = true, size = "sm" }: EstadoEmocionalBadgeProps) {
+  let level: "sin_malestar" | "malestar_moderado" | "malestar_elevado"
+  if (score <= 11) level = "sin_malestar"
+  else if (score <= 19) level = "malestar_moderado"
+  else level = "malestar_elevado"
+
+  const config = estadoEmocionalConfig[level]
+  
+  const sizeStyles = {
+    sm: "px-2 py-0.5 text-xs",
+    md: "px-3 py-1 text-sm"
+  }
+
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 rounded-full font-medium",
+      config.color,
+      sizeStyles[size]
+    )}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
+      {showLabel && config.label}
+    </span>
+  )
+}
