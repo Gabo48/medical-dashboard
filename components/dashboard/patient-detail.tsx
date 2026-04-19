@@ -364,6 +364,7 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
                     }}>
                       {patient.estadoEmocional}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">Escala GHQ-12 · Mayor puntaje = mayor malestar</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">

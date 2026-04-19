@@ -84,35 +84,40 @@ function AdherenceStackedBars({
   persistencia: number
 }) {
   const getColor = (val: number) => {
-    if (val >= 80) return "bg-success"
-    if (val >= 60) return "bg-warning"
+    if (val >= 75) return "bg-success"
+    if (val >= 50) return "bg-warning"
     return "bg-destructive"
   }
 
-  const avg = Math.round((farmacologica + cuidado + persistencia) / 3)
-
   return (
-    <div className="space-y-1">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center gap-2 cursor-help">
-            <div className="flex gap-0.5">
-              <div className={cn("h-2 w-5 rounded-sm", getColor(farmacologica))} title={`Farm: ${farmacologica}%`} />
-              <div className={cn("h-2 w-5 rounded-sm", getColor(cuidado))} title={`Cuid: ${cuidado}%`} />
-              <div className={cn("h-2 w-5 rounded-sm", getColor(persistencia))} title={`Pers: ${persistencia}%`} />
-            </div>
-            <span className="text-xs font-medium w-8 text-right">{avg}%</span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="left" className="text-xs">
-          <div className="space-y-1">
-            <p className="font-medium">Adherencia:</p>
-            <p>Farm: {farmacologica}%</p>
-            <p>Cuidado: {cuidado}%</p>
-            <p>Persistencia: {persistencia}%</p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
+          <div 
+            className={cn("h-full rounded-full transition-all", getColor(farmacologica))}
+            style={{ width: `${farmacologica}%` }}
+          />
+        </div>
+        <span className="text-xs font-medium w-12">Farm. → {farmacologica}%</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
+          <div 
+            className={cn("h-full rounded-full transition-all", getColor(cuidado))}
+            style={{ width: `${cuidado}%` }}
+          />
+        </div>
+        <span className="text-xs font-medium w-12">Cuid. → {cuidado}%</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
+          <div 
+            className={cn("h-full rounded-full transition-all", getColor(persistencia))}
+            style={{ width: `${persistencia}%` }}
+          />
+        </div>
+        <span className="text-xs font-medium w-12">Pers. → {persistencia}%</span>
+      </div>
     </div>
   )
 }
@@ -440,7 +445,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                   const colorClass = getEstadoEmocionalColorClass(patient.estadoEmocional)
                   return (
                     <span className={cn(
-                      "inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm",
+                      "inline-flex items-center justify-center w-7 h-7 rounded font-mono font-bold text-sm",
                       colorClass
                     )}>
                       {patient.estadoEmocional}
