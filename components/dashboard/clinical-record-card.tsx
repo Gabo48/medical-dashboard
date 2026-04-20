@@ -20,7 +20,9 @@ import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -39,7 +41,8 @@ import {
   X,
   Check,
   Plus,
-  Trash2
+  Trash2,
+  Activity
 } from "lucide-react"
 import type { ClinicalRecord, ClinicalNote, Patient } from "@/lib/mock-data"
 
@@ -53,17 +56,126 @@ interface ClinicalRecordCardProps {
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const
 
+// Conditions catalog with priorities and categories
+type Priority = "Alta" | "Media"
+
+interface ConditionInfo {
+  name: string
+  priority: Priority
+  category: string
+  mechanism: string
+}
+
+const CONDITIONS_CATALOG: ConditionInfo[] = [
+  // Cardiovascular (Alta)
+  { name: "Hipertensión arterial", priority: "Alta", category: "Cardiovascular", mechanism: "La obesidad aumenta la resistencia vascular y activa el sistema renina-angiotensina, elevando la presión arterial." },
+  { name: "Enfermedad coronaria", priority: "Alta", category: "Cardiovascular", mechanism: "La obesidad aumenta la resistencia vascular y activa el sistema renina-angiotensina, elevando la presión arterial." },
+  { name: "Insuficiencia cardíaca", priority: "Alta", category: "Cardiovascular", mechanism: "La obesidad aumenta la resistencia vascular y activa el sistema renina-angiotensina, elevando la presión arterial." },
+  { name: "ACV", priority: "Alta", category: "Cardiovascular", mechanism: "La obesidad aumenta la resistencia vascular y activa el sistema renina-angiotensina, elevando la presión arterial." },
+  { name: "Fibrilación auricular", priority: "Alta", category: "Cardiovascular", mechanism: "La obesidad aumenta la resistencia vascular y activa el sistema renina-angiotensina, elevando la presión arterial." },
+  
+  // Metabólico (Alta)
+  { name: "Diabetes mellitus tipo 2", priority: "Alta", category: "Metabólico", mechanism: "El exceso de tejido adiposo genera resistencia a la insulina y disfunción de células beta pancreáticas." },
+  { name: "Síndrome metabólico", priority: "Alta", category: "Metabólico", mechanism: "El exceso de tejido adiposo genera resistencia a la insulina y disfunción de células beta pancreáticas." },
+  { name: "Dislipidemia", priority: "Alta", category: "Metabólico", mechanism: "El exceso de tejido adiposo genera resistencia a la insulina y disfunción de células beta pancreáticas." },
+  { name: "Hígado graso NASH", priority: "Alta", category: "Metabólico", mechanism: "El exceso de tejido adiposo genera resistencia a la insulina y disfunción de células beta pancreáticas." },
+  { name: "Gota", priority: "Alta", category: "Metabólico", mechanism: "El exceso de tejido adiposo genera resistencia a la insulina y disfunción de células beta pancreáticas." },
+  { name: "Prediabetes", priority: "Alta", category: "Metabólico", mechanism: "El exceso de tejido adiposo genera resistencia a la insulina y disfunción de células beta pancreáticas." },
+  
+  // Respiratorio (Alta)
+  { name: "Apnea obstructiva del sueño", priority: "Alta", category: "Respiratorio", mechanism: "El depósito de grasa en vías aéreas superiores y tórax compromete la ventilación y oxigenación." },
+  { name: "Hipoventilación por obesidad", priority: "Alta", category: "Respiratorio", mechanism: "El depósito de grasa en vías aéreas superiores y tórax compromete la ventilación y oxigenación." },
+  { name: "Asma", priority: "Alta", category: "Respiratorio", mechanism: "El depósito de grasa en vías aéreas superiores y tórax compromete la ventilación y oxigenación." },
+  
+  // Psicosocial (Alta)
+  { name: "Depresión", priority: "Alta", category: "Psicosocial", mechanism: "La obesidad se asocia a inflamación crónica, alteraciones neuroendocrinas y estigma social que afectan la salud mental." },
+  { name: "Ansiedad", priority: "Alta", category: "Psicosocial", mechanism: "La obesidad se asocia a inflamación crónica, alteraciones neuroendocrinas y estigma social que afectan la salud mental." },
+  { name: "Trastorno por atracón", priority: "Alta", category: "Psicosocial", mechanism: "La obesidad se asocia a inflamación crónica, alteraciones neuroendocrinas y estigma social que afectan la salud mental." },
+  { name: "Baja autoestima", priority: "Alta", category: "Psicosocial", mechanism: "La obesidad se asocia a inflamación crónica, alteraciones neuroendocrinas y estigma social que afectan la salud mental." },
+  { name: "Estigmatización", priority: "Alta", category: "Psicosocial", mechanism: "La obesidad se asocia a inflamación crónica, alteraciones neuroendocrinas y estigma social que afectan la salud mental." },
+  
+  // Mecánico/Osteoarticular (Media)
+  { name: "Artrosis de rodillas", priority: "Media", category: "Mecánico/Osteoarticular", mechanism: "La sobrecarga mecánica y la inflamación sistémica dañan el cartílago y estructuras articulares." },
+  { name: "Artrosis de cadera", priority: "Media", category: "Mecánico/Osteoarticular", mechanism: "La sobrecarga mecánica y la inflamación sistémica dañan el cartílago y estructuras articulares." },
+  { name: "Lumbalgia crónica", priority: "Media", category: "Mecánico/Osteoarticular", mechanism: "La sobrecarga mecánica y la inflamación sistémica dañan el cartílago y estructuras articulares." },
+  { name: "Túnel carpiano", priority: "Media", category: "Mecánico/Osteoarticular", mechanism: "La sobrecarga mecánica y la inflamación sistémica dañan el cartílago y estructuras articulares." },
+  { name: "Hernias", priority: "Media", category: "Mecánico/Osteoarticular", mechanism: "La sobrecarga mecánica y la inflamación sistémica dañan el cartílago y estructuras articulares." },
+  
+  // Oncológico (Media)
+  { name: "Cáncer de endometrio", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de mama", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de colon", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de recto", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de riñón", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de hígado", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de páncreas", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de esófago", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de ovario", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de tiroides", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  { name: "Cáncer de vesícula biliar", priority: "Media", category: "Oncológico", mechanism: "La obesidad promueve un ambiente proinflamatorio y hormonal que favorece la carcinogénesis." },
+  
+  // Renal (Media)
+  { name: "Enfermedad renal crónica", priority: "Media", category: "Renal", mechanism: "La obesidad induce hiperfiltración glomerular y daño renal progresivo." },
+  { name: "Glomerulopatía asociada a obesidad", priority: "Media", category: "Renal", mechanism: "La obesidad induce hiperfiltración glomerular y daño renal progresivo." },
+  
+  // Reproductivo (Media)
+  { name: "Infertilidad", priority: "Media", category: "Reproductivo", mechanism: "El exceso de tejido adiposo altera el eje hormonal reproductivo y la función ovárica/testicular." },
+  { name: "SOP", priority: "Media", category: "Reproductivo", mechanism: "El exceso de tejido adiposo altera el eje hormonal reproductivo y la función ovárica/testicular." },
+  { name: "Diabetes gestacional", priority: "Media", category: "Reproductivo", mechanism: "El exceso de tejido adiposo altera el eje hormonal reproductivo y la función ovárica/testicular." },
+  { name: "Preeclampsia", priority: "Media", category: "Reproductivo", mechanism: "El exceso de tejido adiposo altera el eje hormonal reproductivo y la función ovárica/testicular." },
+]
+
+// Get condition info by name
+function getConditionInfo(name: string): ConditionInfo | undefined {
+  return CONDITIONS_CATALOG.find(c => c.name === name)
+}
+
+// Get unique categories from conditions
+function getCategoriesFromConditions(conditions: string[]): Map<string, { priority: Priority; mechanism: string; conditions: string[] }> {
+  const categories = new Map<string, { priority: Priority; mechanism: string; conditions: string[] }>()
+  
+  conditions.forEach(condName => {
+    const info = getConditionInfo(condName)
+    if (info) {
+      if (!categories.has(info.category)) {
+        categories.set(info.category, {
+          priority: info.priority,
+          mechanism: info.mechanism,
+          conditions: []
+        })
+      }
+      categories.get(info.category)!.conditions.push(condName)
+    }
+  })
+  
+  return categories
+}
+
+// Group conditions by category for the selector
+function getGroupedConditions(): Map<string, ConditionInfo[]> {
+  const grouped = new Map<string, ConditionInfo[]>()
+  
+  CONDITIONS_CATALOG.forEach(cond => {
+    if (!grouped.has(cond.category)) {
+      grouped.set(cond.category, [])
+    }
+    grouped.get(cond.category)!.push(cond)
+  })
+  
+  return grouped
+}
+
 export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSave }: ClinicalRecordCardProps) {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
   const [externalId, setExternalId] = useState("")
   const [isImporting, setIsImporting] = useState(false)
+  const [isRiskAnalysisOpen, setIsRiskAnalysisOpen] = useState(false)
   
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false)
   const [editedRecord, setEditedRecord] = useState<ClinicalRecord | null>(null)
   
-  // New condition/allergy input state
-  const [newCondition, setNewCondition] = useState("")
+  // New allergy input state
   const [newAllergy, setNewAllergy] = useState("")
   
   // New note state
@@ -92,7 +204,6 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
   const handleCancelEdit = () => {
     setIsEditing(false)
     setEditedRecord(null)
-    setNewCondition("")
     setNewAllergy("")
     setIsAddingNote(false)
     setNewNoteContent("")
@@ -108,13 +219,12 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
     }
   }
 
-  const handleAddCondition = () => {
-    if (newCondition.trim() && editedRecord) {
+  const handleAddCondition = (conditionName: string) => {
+    if (conditionName && editedRecord && !editedRecord.comorbidities.includes(conditionName)) {
       setEditedRecord({
         ...editedRecord,
-        comorbidities: [...editedRecord.comorbidities, newCondition.trim()]
+        comorbidities: [...editedRecord.comorbidities, conditionName]
       })
-      setNewCondition("")
     }
   }
 
@@ -197,6 +307,12 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
 
   // Use edited record when editing, otherwise use original
   const displayRecord = isEditing ? editedRecord : record
+  
+  // Get grouped conditions for selector
+  const groupedConditions = getGroupedConditions()
+  
+  // Get risk analysis categories for modal
+  const riskCategories = displayRecord ? getCategoriesFromConditions(displayRecord.comorbidities) : new Map()
 
   if (!record) {
     return (
@@ -351,46 +467,123 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
         {/* Conditions (formerly Comorbidities) */}
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <AlertCircle className="h-4 w-4 text-warning" />
+            <AlertCircle className="h-4 w-4 text-amber-500" />
             <span className="text-xs font-medium text-muted-foreground">Condiciones asociadas</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {(displayRecord?.comorbidities || []).map((c, i) => (
-              <Badge key={i} variant="secondary" className="text-xs gap-1">
-                {c}
-                {isEditing && (
-                  <button 
-                    onClick={() => handleRemoveCondition(i)}
-                    className="ml-1 hover:text-destructive"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </Badge>
-            ))}
+            {(displayRecord?.comorbidities || []).map((c, i) => {
+              const condInfo = getConditionInfo(c)
+              const isHighPriority = condInfo?.priority === "Alta"
+              return (
+                <Badge 
+                  key={i} 
+                  variant="secondary" 
+                  className="text-xs gap-1.5 pr-2"
+                >
+                  <span 
+                    className={`w-2 h-2 rounded-full ${isHighPriority ? 'bg-red-500' : 'bg-amber-400'}`} 
+                    title={`Prioridad: ${condInfo?.priority || 'Desconocida'}`}
+                  />
+                  {c}
+                  {isEditing && (
+                    <button 
+                      onClick={() => handleRemoveCondition(i)}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </Badge>
+              )
+            })}
             {(displayRecord?.comorbidities || []).length === 0 && !isEditing && (
               <span className="text-sm text-muted-foreground">Sin condiciones asociadas</span>
             )}
           </div>
           {isEditing && (
-            <div className="flex gap-2 mt-2">
-              <Input
-                placeholder="Nueva condición..."
-                value={newCondition}
-                onChange={(e) => setNewCondition(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddCondition()}
-                className="text-sm h-8"
-              />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 px-2"
-                onClick={handleAddCondition}
-                disabled={!newCondition.trim()}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+            <div className="mt-2">
+              <Select onValueChange={handleAddCondition}>
+                <SelectTrigger className="text-sm h-8">
+                  <SelectValue placeholder="Agregar condición..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-80">
+                  {Array.from(groupedConditions.entries()).map(([category, conditions]) => (
+                    <SelectGroup key={category}>
+                      <SelectLabel className="flex items-center gap-2">
+                        <span 
+                          className={`w-2 h-2 rounded-full ${conditions[0].priority === 'Alta' ? 'bg-red-500' : 'bg-amber-400'}`}
+                        />
+                        {category}
+                      </SelectLabel>
+                      {conditions
+                        .filter(c => !editedRecord?.comorbidities.includes(c.name))
+                        .map(cond => (
+                          <SelectItem key={cond.name} value={cond.name}>
+                            {cond.name}
+                          </SelectItem>
+                        ))
+                      }
+                    </SelectGroup>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          )}
+          
+          {/* Risk Analysis Link */}
+          {(displayRecord?.comorbidities || []).length > 0 && !isEditing && (
+            <Dialog open={isRiskAnalysisOpen} onOpenChange={setIsRiskAnalysisOpen}>
+              <DialogTrigger asChild>
+                <button className="mt-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                  <Activity className="h-3 w-3" />
+                  Ver análisis de riesgos
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Análisis de Riesgos
+                  </DialogTitle>
+                  <DialogDescription>
+                    Este análisis refleja únicamente las condiciones registradas para este paciente.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  {Array.from(riskCategories.entries()).map(([category, data]) => (
+                    <div key={category} className="border border-border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span 
+                          className={`w-2.5 h-2.5 rounded-full ${data.priority === 'Alta' ? 'bg-red-500' : 'bg-amber-400'}`}
+                        />
+                        <h4 className="font-medium text-sm">{category}</h4>
+                        <Badge 
+                          variant={data.priority === 'Alta' ? 'destructive' : 'secondary'}
+                          className="text-xs ml-auto"
+                        >
+                          {data.priority}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        {data.mechanism}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {data.conditions.map((cond, i) => (
+                          <Badge key={i} variant="outline" className="text-xs">
+                            {cond}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {riskCategories.size === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No hay condiciones asociadas registradas.
+                    </p>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
 
@@ -588,7 +781,7 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-foreground">{note.content}</p>
+                    <p className="text-sm text-foreground leading-relaxed">{note.content}</p>
                   </>
                 )}
               </div>
@@ -600,20 +793,6 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
             )}
           </div>
         </div>
-
-        {/* Metadata */}
-        {!isEditing && (
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              {displayRecord?.physician}
-            </div>
-            <div className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              Actualizado: {displayRecord?.lastUpdated}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )
