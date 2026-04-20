@@ -246,34 +246,13 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage, o
                   )}
                 </div>
 
-                {/* Channel Selection */}
+                {/* Channel Display (locked to app) */}
                 <div className="space-y-2">
                   <Label>Canal de envío</Label>
-                  <Select value={channel} onValueChange={(v) => setChannel(v as MessageChannel)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="app">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4" />
-                          Aplicación
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="sms">
-                        <div className="flex items-center gap-2">
-                          <Smartphone className="h-4 w-4" />
-                          SMS
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="email">
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4" />
-                          Email
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-2 h-10 px-3 rounded-md border border-input bg-muted text-muted-foreground">
+                    <MessageSquare className="h-4 w-4" />
+                    <span>Aplicación</span>
+                  </div>
                 </div>
 
                 {/* Template Selection */}
