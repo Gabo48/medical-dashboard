@@ -464,67 +464,121 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
 
         <Separator className="bg-border" />
 
-        {/* Conditions (formerly Comorbidities) */}
+        {/* Conditions (formerly Comorbidities) - Grouped by Category */}
         <div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <AlertCircle className="h-4 w-4 text-amber-500" />
             <span className="text-xs font-medium text-muted-foreground">Condiciones asociadas</span>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {(displayRecord?.comorbidities || []).map((c, i) => {
-              const condInfo = getConditionInfo(c)
-              const isHighPriority = condInfo?.priority === "Alta"
-              return (
-                <Badge 
-                  key={i} 
-                  variant="secondary" 
-                  className="text-xs gap-1.5 pr-2"
-                >
-                  <span 
-                    className={`w-2 h-2 rounded-full ${isHighPriority ? 'bg-red-500' : 'bg-amber-400'}`} 
-                    title={`Prioridad: ${condInfo?.priority || 'Desconocida'}`}
-                  />
-                  {c}
-                  {isEditing && (
-                    <button 
-                      onClick={() => handleRemoveCondition(i)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  )}
-                </Badge>
-              )
-            })}
-            {(displayRecord?.comorbidities || []).length === 0 && !isEditing && (
-              <span className="text-sm text-muted-foreground">Sin condiciones asociadas</span>
-            )}
-          </div>
+          
+          {/* Grouped conditions display */}
+          {(displayRecord?.comorbidities || []).length > 0 ? (
+            <div className="space-y-3">
+              {Array.from(riskCategories.entries()).map(([category, data]) => (
+                <div key={category} className="rounded-md border border-border/60 bg-muted/20 p-3">
+                  {/* Category Header */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className={`w-2 h-2 rounded-full ${data.priority === 'Alta' ? 'bg-red-500' : 'bg-amber-400'}`}
+                      />
+                      <span className="text-xs font-medium text-foreground">{category}</span>
+                      <Badge 
+                        variant={data.priority === 'Alta' ? 'destructive' : 'secondary'}
+                        className="text-[10px] px-1.5 py-0"
+                      >
+                        {data.priority}
+                      </Badge>
+                    </div>
+                    {/* Add button for this category in edit mode */}
+                    {isEditing && (
+                      <Select onValueChange={handleAddCondition}>
+                        <SelectTrigger className="w-7 h-7 p-0 border-none bg-transparent hover:bg-accent">
+                          <Plus className="h-3.5 w-3.5 mx-auto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {groupedConditions.get(category)
+                            ?.filter(c => !editedRecord?.comorbidities.includes(c.name))
+                            .map(cond => (
+                              <SelectItem key={cond.name} value={cond.name}>
+                                {cond.name}
+                              </SelectItem>
+                            ))
+                          }
+                          {groupedConditions.get(category)
+                            ?.filter(c => !editedRecord?.comorbidities.includes(c.name)).length === 0 && (
+                            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                              Todas las condiciones agregadas
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  {/* Conditions tags */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {data.conditions.map((condName) => {
+                      const condIndex = displayRecord?.comorbidities.indexOf(condName) ?? -1
+                      return (
+                        <Badge 
+                          key={condName} 
+                          variant="secondary" 
+                          className="text-xs gap-1"
+                        >
+                          {condName}
+                          {isEditing && condIndex >= 0 && (
+                            <button 
+                              onClick={() => handleRemoveCondition(condIndex)}
+                              className="ml-0.5 hover:text-destructive"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">Sin condiciones asociadas</span>
+          )}
+
+          {/* Add new category in edit mode */}
           {isEditing && (
-            <div className="mt-2">
+            <div className="mt-3">
               <Select onValueChange={handleAddCondition}>
                 <SelectTrigger className="text-sm h-8">
-                  <SelectValue placeholder="Agregar condición..." />
+                  <SelectValue placeholder="Agregar condición de otra categoría..." />
                 </SelectTrigger>
                 <SelectContent className="max-h-80">
-                  {Array.from(groupedConditions.entries()).map(([category, conditions]) => (
-                    <SelectGroup key={category}>
-                      <SelectLabel className="flex items-center gap-2">
-                        <span 
-                          className={`w-2 h-2 rounded-full ${conditions[0].priority === 'Alta' ? 'bg-red-500' : 'bg-amber-400'}`}
-                        />
-                        {category}
-                      </SelectLabel>
-                      {conditions
-                        .filter(c => !editedRecord?.comorbidities.includes(c.name))
-                        .map(cond => (
-                          <SelectItem key={cond.name} value={cond.name}>
-                            {cond.name}
-                          </SelectItem>
-                        ))
-                      }
-                    </SelectGroup>
-                  ))}
+                  {Array.from(groupedConditions.entries())
+                    .filter(([category]) => !riskCategories.has(category))
+                    .map(([category, conditions]) => (
+                      <SelectGroup key={category}>
+                        <SelectLabel className="flex items-center gap-2">
+                          <span 
+                            className={`w-2 h-2 rounded-full ${conditions[0].priority === 'Alta' ? 'bg-red-500' : 'bg-amber-400'}`}
+                          />
+                          {category}
+                        </SelectLabel>
+                        {conditions
+                          .filter(c => !editedRecord?.comorbidities.includes(c.name))
+                          .map(cond => (
+                            <SelectItem key={cond.name} value={cond.name}>
+                              {cond.name}
+                            </SelectItem>
+                          ))
+                        }
+                      </SelectGroup>
+                    ))}
+                  {Array.from(groupedConditions.entries())
+                    .filter(([category]) => !riskCategories.has(category)).length === 0 && (
+                    <div className="px-2 py-2 text-xs text-muted-foreground text-center">
+                      Todas las categorías ya tienen condiciones
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -534,7 +588,7 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
           {(displayRecord?.comorbidities || []).length > 0 && !isEditing && (
             <Dialog open={isRiskAnalysisOpen} onOpenChange={setIsRiskAnalysisOpen}>
               <DialogTrigger asChild>
-                <button className="mt-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                <button className="mt-3 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
                   <Activity className="h-3 w-3" />
                   Ver análisis de riesgos
                 </button>
