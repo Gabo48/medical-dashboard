@@ -157,3 +157,155 @@ export function EstadoEmocionalInfoModal() {
     </>
   )
 }
+
+// Risk level configurations for the modal
+const riskLevelData = [
+  {
+    nivel: 1,
+    label: "Muy alto",
+    colorClass: "bg-destructive",
+    bgClass: "bg-destructive/10 border-destructive/20",
+    textClass: "text-destructive",
+    criterios: "Expresa no querer continuar, dejó de asistir a controles, silencio >7 días",
+    umbrales: {
+      adherencia: "<40%",
+      ghq12: "≥7",
+      readiness: "≤2",
+      convivencia: "Vive solo"
+    },
+    accion: "Escalada inmediata. Contacto telefónico. Alerta ROJA."
+  },
+  {
+    nivel: 2,
+    label: "Alto",
+    colorClass: "bg-orange-500",
+    bgClass: "bg-orange-500/10 border-orange-500/20",
+    textClass: "text-orange-500",
+    criterios: "Ambivalencia expresada, ha faltado 1–2 controles, efectos secundarios no manejados",
+    umbrales: {
+      adherencia: "40–60%",
+      ghq12: "≥7 o 3–6",
+      readiness: "≤2",
+      convivencia: "Cualquiera"
+    },
+    accion: "Re-engagement. Contacto diario. Alerta NARANJA."
+  },
+  {
+    nivel: 3,
+    label: "Moderado",
+    colorClass: "bg-warning",
+    bgClass: "bg-warning/10 border-warning/20",
+    textClass: "text-warning",
+    criterios: "Adherencia parcial, dificultades prácticas (acceso, costo, horarios)",
+    umbrales: {
+      adherencia: "60–79%",
+      ghq12: "3–6",
+      readiness: "3",
+      convivencia: "Cualquiera"
+    },
+    accion: "Educar y ofrecer estrategias. Contacto cada 2–3 días. Alerta AMARILLA."
+  },
+  {
+    nivel: 4,
+    label: "Bajo",
+    colorClass: "bg-lime-500",
+    bgClass: "bg-lime-500/10 border-lime-500/20",
+    textClass: "text-lime-500",
+    criterios: "Adherencia adecuada, asiste a controles, motivación estable, apoyo familiar",
+    umbrales: {
+      adherencia: "80–89%",
+      ghq12: "0–2",
+      readiness: "4",
+      convivencia: "Acompañado"
+    },
+    accion: "Seguimiento normal cada 3–5 días. Refuerzo positivo."
+  },
+  {
+    nivel: 5,
+    label: "Muy bajo",
+    colorClass: "bg-success",
+    bgClass: "bg-success/10 border-success/20",
+    textClass: "text-success",
+    criterios: "Adherencia óptima, asiste a todos los controles, alta motivación sostenida",
+    umbrales: {
+      adherencia: "≥90%",
+      ghq12: "0–2",
+      readiness: "5",
+      convivencia: "Acompañado"
+    },
+    accion: "Reducir frecuencia de contacto. Seguimiento semanal. Prevención de fatiga."
+  }
+]
+
+interface RiesgoAbandonoInfoModalProps {
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+export function RiesgoAbandonoInfoModal({ isOpen, onOpenChange }: RiesgoAbandonoInfoModalProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl">Criterios de riesgo de abandono</DialogTitle>
+          <p className="text-sm text-muted-foreground">Referencia clínica — escala 1 a 5</p>
+        </DialogHeader>
+        <div className="space-y-3 mt-2">
+          {riskLevelData.map((level) => (
+            <div 
+              key={level.nivel}
+              className={cn(
+                "flex rounded-lg border overflow-hidden",
+                level.bgClass
+              )}
+            >
+              {/* Color stripe */}
+              <div className={cn("w-2 flex-shrink-0", level.colorClass)} />
+              
+              <div className="flex-1 p-4 space-y-3">
+                {/* Header with level number and label */}
+                <div className="flex items-center gap-2">
+                  <span className={cn("text-lg font-bold", level.textClass)}>
+                    {level.nivel}
+                  </span>
+                  <span className="text-base font-semibold">— {level.label}</span>
+                </div>
+
+                {/* Clinical criteria */}
+                <p className="text-sm text-muted-foreground">
+                  {level.criterios}
+                </p>
+
+                {/* Threshold pills */}
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full bg-background/80 text-xs font-medium border">
+                    Adherencia {level.umbrales.adherencia}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full bg-background/80 text-xs font-medium border">
+                    GHQ-12 {level.umbrales.ghq12}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full bg-background/80 text-xs font-medium border">
+                    Readiness {level.umbrales.readiness}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full bg-background/80 text-xs font-medium border">
+                    {level.umbrales.convivencia}
+                  </span>
+                </div>
+
+                {/* Recommended action - highlighted */}
+                <div className={cn(
+                  "p-3 rounded-md border-l-4",
+                  level.colorClass,
+                  "bg-background/60"
+                )}>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Acción de Sarah:</p>
+                  <p className="text-sm font-semibold">{level.accion}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}

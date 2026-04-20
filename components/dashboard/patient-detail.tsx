@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Calendar } from "@/components/ui/calendar"
-import { AlertBadge, MoodBadge, EstadoEmocionalBadge, EstadoEmocionalInfoModal } from "./alert-badge"
+import { AlertBadge, MoodBadge, EstadoEmocionalBadge, EstadoEmocionalInfoModal, RiesgoAbandonoInfoModal } from "./alert-badge"
 import { WeightChart } from "./weight-chart"
 import { AdherenceChart } from "./adherence-chart"
 import { MoodChart } from "./mood-chart"
@@ -96,6 +96,7 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
     from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     to: new Date()
   })
+  const [isRiesgoModalOpen, setIsRiesgoModalOpen] = useState(false)
 
   const weightHistory = getWeightHistory(patient.id)
   const adherenceHistory = getAdherenceHistory(patient.id)
@@ -166,60 +167,73 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
             {/* Risk Badge */}
             <div className="flex-1 flex justify-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-col items-center gap-1 cursor-help">
-                    <span className="text-xs text-muted-foreground font-medium">Riesgo de abandono</span>
-                    <span className={cn(
-                      "inline-flex items-center justify-center px-3 py-1.5 rounded-md font-bold text-sm",
-                      getRiesgoColor(patient.riesgoAbandono.nivel)
-                    )}>
-                      Nivel {patient.riesgoAbandono.nivel}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {getRiesgoLabel(patient.riesgoAbandono.nivel)}
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[320px]">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 border-b border-border pb-2">
+              <div className="flex items-start gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex flex-col items-center gap-1 cursor-help">
+                      <span className="text-xs text-muted-foreground font-medium">Riesgo de abandono</span>
                       <span className={cn(
-                        "inline-flex items-center justify-center px-2 py-0.5 rounded font-bold text-xs",
+                        "inline-flex items-center justify-center px-3 py-1.5 rounded-md font-bold text-sm",
                         getRiesgoColor(patient.riesgoAbandono.nivel)
                       )}>
                         Nivel {patient.riesgoAbandono.nivel}
                       </span>
-                      <span className="font-medium text-sm">
+                      <span className="text-xs text-muted-foreground">
                         {getRiesgoLabel(patient.riesgoAbandono.nivel)}
                       </span>
                     </div>
-                    
-                    {patient.riesgoAbandono.condicionesActivas.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-muted-foreground mb-1">Condiciones activas:</p>
-                        <ul className="text-xs space-y-0.5">
-                          {patient.riesgoAbandono.condicionesActivas.map((condicion, idx) => (
-                            <li key={idx} className="flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
-                              {getCondicionLabel(condicion)}
-                            </li>
-                          ))}
-                        </ul>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[320px]">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 border-b border-border pb-2">
+                        <span className={cn(
+                          "inline-flex items-center justify-center px-2 py-0.5 rounded font-bold text-xs",
+                          getRiesgoColor(patient.riesgoAbandono.nivel)
+                        )}>
+                          Nivel {patient.riesgoAbandono.nivel}
+                        </span>
+                        <span className="font-medium text-sm">
+                          {getRiesgoLabel(patient.riesgoAbandono.nivel)}
+                        </span>
                       </div>
-                    )}
-                    
-                    {patient.riesgoAbandono.condicionesActivas.length === 0 && (
-                      <p className="text-xs text-muted-foreground">Sin condiciones de riesgo activas</p>
-                    )}
-                    
-                    <div className="pt-1 border-t border-border">
-                      <p className="text-xs font-medium text-muted-foreground mb-0.5">Accion recomendada:</p>
-                      <p className="text-xs">{getAccionRecomendada(patient.riesgoAbandono.nivel)}</p>
+                      
+                      {patient.riesgoAbandono.condicionesActivas.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Condiciones activas:</p>
+                          <ul className="text-xs space-y-0.5">
+                            {patient.riesgoAbandono.condicionesActivas.map((condicion, idx) => (
+                              <li key={idx} className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
+                                {getCondicionLabel(condicion)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {patient.riesgoAbandono.condicionesActivas.length === 0 && (
+                        <p className="text-xs text-muted-foreground">Sin condiciones de riesgo activas</p>
+                      )}
+                      
+                      <div className="pt-1 border-t border-border">
+                        <p className="text-xs font-medium text-muted-foreground mb-0.5">Accion recomendada:</p>
+                        <p className="text-xs">{getAccionRecomendada(patient.riesgoAbandono.nivel)}</p>
+                      </div>
                     </div>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
+                  </TooltipContent>
+                </Tooltip>
+                <button
+                  onClick={() => setIsRiesgoModalOpen(true)}
+                  className="mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full hover:bg-muted transition-colors"
+                  title="Ver criterios de riesgo"
+                >
+                  <Info className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </button>
+              </div>
+              <RiesgoAbandonoInfoModal 
+                isOpen={isRiesgoModalOpen} 
+                onOpenChange={setIsRiesgoModalOpen} 
+              />
             </div>
             
             {/* Date Range Selector */}
