@@ -406,39 +406,88 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
               </TableCell>
               <TableCell className="text-center py-3 px-4">
                 {(() => {
-                  const symptoms = getPatientSymptoms(patient.id)
-                  const symptomsCount = symptoms.length
+                  const allSymptomReports = getPatientSymptoms(patient.id)
+                  
+                  // Group by symptom name and get the latest report for each
+                  const uniqueSymptoms = allSymptomReports.reduce((acc, report) => {
+                    const existing = acc.find(s => s.symptom === report.symptom)
+                    if (!existing) {
+                      acc.push(report)
+                    } else if (new Date(report.date) > new Date(existing.date)) {
+                      // Replace with more recent report
+                      const idx = acc.indexOf(existing)
+                      acc[idx] = report
+                    }
+                    return acc
+                  }, [] as typeof allSymptomReports)
+                  
+                  const symptomsCount = uniqueSymptoms.length
+                  const maxSeverity = uniqueSymptoms.length > 0 
+                    ? Math.max(...uniqueSymptoms.map(s => s.severity)) 
+                    : 0
+                  
+                  // Color based on max severity: 0-2 green, 3-4 yellow, 5 orange, 6-7 red
+                  const getBadgeColor = (severity: number) => {
+                    if (severity === 0) return "bg-success/20 text-success"
+                    if (severity <= 2) return "bg-success/20 text-success"
+                    if (severity <= 4) return "bg-warning/20 text-warning"
+                    if (severity === 5) return "bg-orange-500/20 text-orange-600 dark:text-orange-400"
+                    return "bg-destructive/20 text-destructive"
+                  }
+                  
+                  // Severity label for tooltip
+                  const getSeverityLabel = (severity: number) => {
+                    if (severity <= 2) return "Leve"
+                    if (severity <= 4) return "Moderado"
+                    if (severity === 5) return "Severo"
+                    return "Crítico"
+                  }
+                  
+                  const getSeverityDotColor = (severity: number) => {
+                    if (severity <= 2) return "bg-success"
+                    if (severity <= 4) return "bg-warning"
+                    if (severity === 5) return "bg-orange-500"
+                    return "bg-destructive"
+                  }
+                  
                   return (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex flex-col items-center gap-0.5 cursor-help">
                           <span className={cn(
                             "inline-flex items-center justify-center w-7 h-7 rounded font-mono font-bold text-sm",
-                            symptomsCount === 0 ? "bg-success/20 text-success" :
-                            symptomsCount <= 2 ? "bg-warning/20 text-warning" : "bg-destructive/20 text-destructive"
+                            symptomsCount === 0 ? "bg-muted text-muted-foreground" : getBadgeColor(maxSeverity)
                           )}>
                             {symptomsCount}
                           </span>
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent side="left" className="max-w-[250px]">
+                      <TooltipContent side="left" className="max-w-[280px]">
                         {symptomsCount === 0 ? (
-                          <span>Sin sintomas reportados</span>
+                          <span>Sin síntomas reportados</span>
                         ) : (
-                          <div className="space-y-1">
-                            <p className="font-medium">{symptomsCount} sintoma{symptomsCount > 1 ? "s" : ""} reportado{symptomsCount > 1 ? "s" : ""}:</p>
-                            <ul className="text-xs space-y-0.5">
-                              {symptoms.slice(0, 5).map((s, i) => (
-                                <li key={i} className="flex items-center gap-1">
-                                  <span className={cn(
-                                    "w-1.5 h-1.5 rounded-full",
-                                    s.severity === 1 ? "bg-success" : s.severity === 2 ? "bg-warning" : "bg-destructive"
-                                  )} />
-                                  {s.symptom}
+                          <div className="space-y-2">
+                            <p className="font-medium border-b border-border pb-1">Síntomas activos: {symptomsCount}</p>
+                            <ul className="text-xs space-y-1.5">
+                              {uniqueSymptoms
+                                .sort((a, b) => b.severity - a.severity)
+                                .slice(0, 6)
+                                .map((s, i) => (
+                                <li key={i} className="flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={cn(
+                                      "w-2 h-2 rounded-full flex-shrink-0",
+                                      getSeverityDotColor(s.severity)
+                                    )} />
+                                    <span>{s.symptom}</span>
+                                  </div>
+                                  <span className="text-muted-foreground font-mono whitespace-nowrap">
+                                    {s.severity}/7 ({getSeverityLabel(s.severity)})
+                                  </span>
                                 </li>
                               ))}
-                              {symptoms.length > 5 && (
-                                <li className="text-muted-foreground">+{symptoms.length - 5} mas...</li>
+                              {uniqueSymptoms.length > 6 && (
+                                <li className="text-muted-foreground pt-1">+{uniqueSymptoms.length - 6} más...</li>
                               )}
                             </ul>
                           </div>
