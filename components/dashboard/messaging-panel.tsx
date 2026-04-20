@@ -313,6 +313,60 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage, o
                     rows={4}
                   />
                 </div>
+
+                {/* Send Options */}
+                <div className="space-y-3 pt-3 border-t">
+                  <Label>Opciones de envío</Label>
+                  <RadioGroup 
+                    value={sendOption} 
+                    onValueChange={(value) => setSendOption(value as "now" | "scheduled")}
+                    className="flex flex-col gap-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="now" id="send-now" />
+                      <Label htmlFor="send-now" className="font-normal cursor-pointer">
+                        Enviar ahora
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="scheduled" id="send-scheduled" />
+                      <Label htmlFor="send-scheduled" className="font-normal cursor-pointer">
+                        Programar para después
+                      </Label>
+                    </div>
+                  </RadioGroup>
+
+                  {sendOption === "scheduled" && (
+                    <div className="flex gap-3 pl-6">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-[180px] justify-start text-left font-normal"
+                          >
+                            <CalendarClock className="mr-2 h-4 w-4" />
+                            {scheduledDate ? format(scheduledDate, "PPP", { locale: es }) : "Seleccionar fecha"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={scheduledDate}
+                            onSelect={setScheduledDate}
+                            disabled={(date) => date < new Date()}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <Input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                        className="w-[120px]"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsComposeOpen(false)}>
@@ -320,10 +374,19 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage, o
                 </Button>
                 <Button 
                   onClick={handleSend} 
-                  disabled={!selectedRecipient || !subject.trim() || !content.trim()}
+                  disabled={!selectedRecipient || !subject.trim() || !content.trim() || (sendOption === "scheduled" && !scheduledDate)}
                 >
-                  <Send className="h-4 w-4 mr-2" />
-                  Enviar
+                  {sendOption === "now" ? (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Enviar ahora
+                    </>
+                  ) : (
+                    <>
+                      <CalendarClock className="h-4 w-4 mr-2" />
+                      Programar envío
+                    </>
+                  )}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -344,6 +407,19 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage, o
           </TabsList>
 
           <TabsContent value="patient">
+            {onOpenChat && (
+              <div className="mb-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full gap-2"
+                  onClick={() => onOpenChat(patient.id)}
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Abrir chat con {patient.name}
+                </Button>
+              </div>
+            )}
             <MessageList messages={patientMessages} getStatusIcon={getStatusIcon} getChannelIcon={getChannelIcon} />
           </TabsContent>
 
