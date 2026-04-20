@@ -22,7 +22,9 @@ import { IntentsByType } from "./intents-by-type"
 import { ClinicalRecordCard } from "./clinical-record-card"
 import { MedicationPlanCard } from "./medication-plan-card"
 import { MessagingPanel } from "./messaging-panel"
+import { ClinicalMetricsSection } from "./clinical-metrics-section"
 import type { Patient } from "@/lib/mock-data"
+import { getPatientClinicalMetrics } from "@/lib/clinical-metrics-data"
 import { 
   getWeightHistory, 
   getAdherenceHistory, 
@@ -40,11 +42,8 @@ import {
   getPatientCaregivers
 } from "@/lib/mock-data"
 import { 
-  Scale, 
-  Ruler, 
   Calendar as CalendarIcon, 
   MessageSquare, 
-  TrendingDown,
   Activity,
   CalendarCheck,
   CalendarX,
@@ -86,6 +85,7 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
   const medicationPlan = getPatientMedicationPlan(patient.id)
   const patientMessages = getPatientMessages(patient.id)
   const caregivers = getPatientCaregivers(patient.id)
+  const clinicalMetrics = getPatientClinicalMetrics(patient.id)
 
   // Calculate days without registering (simulated based on last interaction)
   const lastInteractionDate = new Date(patient.lastInteraction)
@@ -223,53 +223,8 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
         {/* Information Tab */}
         <TabsContent value="info" className="space-y-4 mt-4">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <Scale className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Peso actual</p>
-                    <p className="text-lg font-bold text-foreground">{patient.weight} kg</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-chart-3" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">IMC actual</p>
-                    <p className="text-lg font-bold text-foreground">{patient.bmi.toFixed(1)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4 text-success" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Cambio IMC</p>
-                    <p className="text-lg font-bold text-success">{patient.bmiChange}%</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <Ruler className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Estatura</p>
-                    <p className="text-lg font-bold text-foreground">{patient.height} m</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Clinical Metrics Section - replaces Quick Stats with extended metrics */}
+          <ClinicalMetricsSection metrics={clinicalMetrics} patient={patient} />
 
           {/* Risk Alerts & Factors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
