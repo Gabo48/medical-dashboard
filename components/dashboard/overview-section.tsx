@@ -421,11 +421,11 @@ export function OverviewSection({ patients: filteredPatients, treatmentLabel, on
                   wrapperStyle={{ paddingTop: "10px" }}
                   formatter={(value) => <span style={{ color: "var(--foreground)", fontSize: "11px" }}>{value}</span>}
                 />
-                <Bar dataKey="Muy alto (1)" stackId="a" fill="hsl(var(--destructive))" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Alto (2)" stackId="a" fill="#f97316" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Moderado (3)" stackId="a" fill="hsl(var(--warning))" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Bajo (4)" stackId="a" fill="#84cc16" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Muy bajo (5)" stackId="a" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Muy alto (1)" stackId="a" fill="#dc6868" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Alto (2)" stackId="a" fill="#e09560" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Moderado (3)" stackId="a" fill="#d4a84a" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Bajo (4)" stackId="a" fill="#9cb87a" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="Muy bajo (5)" stackId="a" fill="#7aab7a" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
