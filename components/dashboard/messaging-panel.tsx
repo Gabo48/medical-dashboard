@@ -43,8 +43,7 @@ import {
   CheckCheck,
   AlertCircle,
   Phone,
-  CalendarClock,
-  ExternalLink
+  CalendarClock
 } from "lucide-react"
 import type { Message, Caregiver, Patient, MessageChannel, MessageRecipientType } from "@/lib/mock-data"
 import { getRelationshipLabel, getMessageStatusLabel, getMessageChannelLabel } from "@/lib/mock-data"
@@ -73,8 +72,36 @@ const messageTemplates = [
   { id: "caregiver_alert", subject: "Alerta importante", content: "Es importante que estén al tanto de la situación actual del paciente. Por favor comuníquense con nosotros." },
 ]
 
+// Mock chat messages for demo
+interface ChatMessage {
+  id: string
+  sender: "doctor" | "patient" | "caregiver"
+  senderName: string
+  content: string
+  timestamp: Date
+}
+
+const mockPatientChat: ChatMessage[] = [
+  { id: "c1", sender: "patient", senderName: "María García", content: "Buenos días doctor, quería preguntarle sobre la dosis del medicamento", timestamp: new Date("2024-01-15T09:30:00") },
+  { id: "c2", sender: "doctor", senderName: "Dr. Juan Pérez", content: "Buenos días María. Claro, dígame en qué puedo ayudarla.", timestamp: new Date("2024-01-15T09:35:00") },
+  { id: "c3", sender: "patient", senderName: "María García", content: "¿Puedo tomar el medicamento después del almuerzo en lugar de antes?", timestamp: new Date("2024-01-15T09:37:00") },
+  { id: "c4", sender: "doctor", senderName: "Dr. Juan Pérez", content: "Sí, puede tomarlo después del almuerzo. Lo importante es mantener la consistencia en el horario.", timestamp: new Date("2024-01-15T09:40:00") },
+]
+
+const mockCaregiverChat: ChatMessage[] = [
+  { id: "cg1", sender: "caregiver", senderName: "Roberto García (Esposo)", content: "Doctor, le escribo porque María ha tenido náuseas esta semana", timestamp: new Date("2024-01-14T14:20:00") },
+  { id: "cg2", sender: "doctor", senderName: "Dr. Juan Pérez", content: "Gracias por informarme Roberto. ¿Las náuseas son constantes o solo después de tomar el medicamento?", timestamp: new Date("2024-01-14T14:25:00") },
+  { id: "cg3", sender: "caregiver", senderName: "Roberto García (Esposo)", content: "Principalmente después del medicamento, como 2 horas después", timestamp: new Date("2024-01-14T14:28:00") },
+  { id: "cg4", sender: "doctor", senderName: "Dr. Juan Pérez", content: "Es un efecto secundario común. Asegúrese de que tome el medicamento con alimentos. Si persiste, agendemos una cita.", timestamp: new Date("2024-01-14T14:32:00") },
+]
+
 export function MessagingPanel({ patient, messages, caregivers, onSendMessage, onOpenChat }: MessagingPanelProps) {
   const [isComposeOpen, setIsComposeOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [chatTab, setChatTab] = useState<"patient" | "caregiver">("patient")
+  const [chatMessage, setChatMessage] = useState("")
+  const [patientChatMessages, setPatientChatMessages] = useState<ChatMessage[]>(mockPatientChat)
+  const [caregiverChatMessages, setCaregiverChatMessages] = useState<ChatMessage[]>(mockCaregiverChat)
   const [recipientType, setRecipientType] = useState<MessageRecipientType>("patient")
   const [selectedRecipient, setSelectedRecipient] = useState<string>("")
   const [channel, setChannel] = useState<MessageChannel>("app")
@@ -84,6 +111,25 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage, o
   const [sendOption, setSendOption] = useState<"now" | "scheduled">("now")
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined)
   const [scheduledTime, setScheduledTime] = useState<string>("09:00")
+
+  const handleSendChatMessage = () => {
+    if (!chatMessage.trim()) return
+    
+    const newMessage: ChatMessage = {
+      id: `new-${Date.now()}`,
+      sender: "doctor",
+      senderName: "Dr. Juan Pérez",
+      content: chatMessage.trim(),
+      timestamp: new Date()
+    }
+    
+    if (chatTab === "patient") {
+      setPatientChatMessages(prev => [...prev, newMessage])
+    } else {
+      setCaregiverChatMessages(prev => [...prev, newMessage])
+    }
+    setChatMessage("")
+  }
 
   const handleTemplateSelect = (templateId: string) => {
     const template = messageTemplates.find(t => t.id === templateId)
@@ -158,7 +204,124 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage, o
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
             Mensajería
           </CardTitle>
-          <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+          <div className="flex items-center gap-2">
+            {/* Chat Button */}
+            <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="h-7 gap-1">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Chat
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg h-[500px] flex flex-col">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Chat en vivo
+                  </DialogTitle>
+                  <DialogDescription>
+                    Comunícate directamente con el paciente o su red de apoyo.
+                  </DialogDescription>
+                </DialogHeader>
+                <Tabs value={chatTab} onValueChange={(v) => setChatTab(v as "patient" | "caregiver")} className="flex-1 flex flex-col">
+                  <TabsList className="w-full grid grid-cols-2">
+                    <TabsTrigger value="patient" className="text-xs gap-1">
+                      <User className="h-3 w-3" />
+                      Paciente
+                    </TabsTrigger>
+                    <TabsTrigger value="caregiver" className="text-xs gap-1">
+                      <Users className="h-3 w-3" />
+                      Red de apoyo
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="patient" className="flex-1 flex flex-col mt-3">
+                    <ScrollArea className="flex-1 h-[280px] pr-3">
+                      <div className="space-y-3">
+                        {patientChatMessages.map((msg) => (
+                          <div 
+                            key={msg.id} 
+                            className={`flex ${msg.sender === "doctor" ? "justify-end" : "justify-start"}`}
+                          >
+                            <div 
+                              className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                                msg.sender === "doctor" 
+                                  ? "bg-primary text-primary-foreground" 
+                                  : "bg-muted"
+                              }`}
+                            >
+                              <p className="text-sm">{msg.content}</p>
+                              <p className={`text-xs mt-1 ${msg.sender === "doctor" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                {msg.timestamp.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </TabsContent>
+                  
+                  <TabsContent value="caregiver" className="flex-1 flex flex-col mt-3">
+                    {caregivers.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                        <div className="text-center">
+                          <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          No hay red de apoyo registrada
+                        </div>
+                      </div>
+                    ) : (
+                      <ScrollArea className="flex-1 h-[280px] pr-3">
+                        <div className="space-y-3">
+                          {caregiverChatMessages.map((msg) => (
+                            <div 
+                              key={msg.id} 
+                              className={`flex ${msg.sender === "doctor" ? "justify-end" : "justify-start"}`}
+                            >
+                              <div 
+                                className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                                  msg.sender === "doctor" 
+                                    ? "bg-primary text-primary-foreground" 
+                                    : "bg-muted"
+                                }`}
+                              >
+                                {msg.sender !== "doctor" && (
+                                  <p className="text-xs font-medium mb-1">{msg.senderName}</p>
+                                )}
+                                <p className="text-sm">{msg.content}</p>
+                                <p className={`text-xs mt-1 ${msg.sender === "doctor" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                  {msg.timestamp.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    )}
+                  </TabsContent>
+                </Tabs>
+                
+                {/* Chat Input */}
+                <div className="flex gap-2 pt-3 border-t">
+                  <Input
+                    placeholder={chatTab === "patient" ? `Escribe a ${patient.name}...` : "Escribe a la red de apoyo..."}
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendChatMessage()}
+                    disabled={chatTab === "caregiver" && caregivers.length === 0}
+                  />
+                  <Button 
+                    size="icon" 
+                    onClick={handleSendChatMessage}
+                    disabled={!chatMessage.trim() || (chatTab === "caregiver" && caregivers.length === 0)}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            {/* Schedule Message Button */}
+            <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="h-7 gap-1">
                 <CalendarClock className="h-3.5 w-3.5" />
@@ -369,7 +532,8 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage, o
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -386,19 +550,6 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage, o
           </TabsList>
 
           <TabsContent value="patient">
-            {onOpenChat && (
-              <div className="mb-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full gap-2"
-                  onClick={() => onOpenChat(patient.id)}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Abrir chat con {patient.name}
-                </Button>
-              </div>
-            )}
             <MessageList messages={patientMessages} getStatusIcon={getStatusIcon} getChannelIcon={getChannelIcon} />
           </TabsContent>
 
