@@ -42,7 +42,11 @@ import {
   getPatientMedicationPlan,
   getPatientMessages,
   getPatientCaregivers,
-  getEstadoEmocionalLevel
+  getEstadoEmocionalLevel,
+  getRiesgoLabel,
+  getRiesgoColor,
+  getCondicionLabel,
+  getAccionRecomendada
 } from "@/lib/mock-data"
 import { 
   Calendar as CalendarIcon, 
@@ -63,6 +67,7 @@ import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import type { DateRange } from "react-day-picker"
+import { cn } from "@/lib/utils"
 
 interface PatientDetailProps {
   patient: Patient
@@ -157,6 +162,64 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Risk Badge */}
+            <div className="flex-1 flex justify-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex flex-col items-center gap-1 cursor-help">
+                    <span className="text-xs text-muted-foreground font-medium">Riesgo de abandono</span>
+                    <span className={cn(
+                      "inline-flex items-center justify-center px-3 py-1.5 rounded-md font-bold text-sm",
+                      getRiesgoColor(patient.riesgoAbandono.nivel)
+                    )}>
+                      Nivel {patient.riesgoAbandono.nivel}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {getRiesgoLabel(patient.riesgoAbandono.nivel)}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[320px]">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 border-b border-border pb-2">
+                      <span className={cn(
+                        "inline-flex items-center justify-center px-2 py-0.5 rounded font-bold text-xs",
+                        getRiesgoColor(patient.riesgoAbandono.nivel)
+                      )}>
+                        Nivel {patient.riesgoAbandono.nivel}
+                      </span>
+                      <span className="font-medium text-sm">
+                        {getRiesgoLabel(patient.riesgoAbandono.nivel)}
+                      </span>
+                    </div>
+                    
+                    {patient.riesgoAbandono.condicionesActivas.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Condiciones activas:</p>
+                        <ul className="text-xs space-y-0.5">
+                          {patient.riesgoAbandono.condicionesActivas.map((condicion, idx) => (
+                            <li key={idx} className="flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
+                              {getCondicionLabel(condicion)}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {patient.riesgoAbandono.condicionesActivas.length === 0 && (
+                      <p className="text-xs text-muted-foreground">Sin condiciones de riesgo activas</p>
+                    )}
+                    
+                    <div className="pt-1 border-t border-border">
+                      <p className="text-xs font-medium text-muted-foreground mb-0.5">Accion recomendada:</p>
+                      <p className="text-xs">{getAccionRecomendada(patient.riesgoAbandono.nivel)}</p>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             </div>
             
             {/* Date Range Selector */}
