@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -14,8 +16,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { 
   FileText, 
   Download, 
@@ -26,32 +34,169 @@ import {
   Stethoscope,
   Calendar,
   User,
-  ExternalLink
+  ExternalLink,
+  Pencil,
+  X,
+  Check,
+  Plus,
+  Trash2
 } from "lucide-react"
-import type { ClinicalRecord, Patient } from "@/lib/mock-data"
+import type { ClinicalRecord, ClinicalNote, Patient } from "@/lib/mock-data"
 
 interface ClinicalRecordCardProps {
   record: ClinicalRecord | null
   patient: Patient
   onImport?: (externalId: string) => void
   onRefresh?: () => void
+  onSave?: (record: ClinicalRecord) => void
 }
 
-export function ClinicalRecordCard({ record, patient, onImport, onRefresh }: ClinicalRecordCardProps) {
+const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const
+
+export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSave }: ClinicalRecordCardProps) {
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
   const [externalId, setExternalId] = useState("")
   const [isImporting, setIsImporting] = useState(false)
+  
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedRecord, setEditedRecord] = useState<ClinicalRecord | null>(null)
+  
+  // New condition/allergy input state
+  const [newCondition, setNewCondition] = useState("")
+  const [newAllergy, setNewAllergy] = useState("")
+  
+  // New note state
+  const [isAddingNote, setIsAddingNote] = useState(false)
+  const [newNoteContent, setNewNoteContent] = useState("")
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [editingNoteContent, setEditingNoteContent] = useState("")
 
   const handleImport = async () => {
     if (!externalId.trim()) return
     setIsImporting(true)
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500))
     onImport?.(externalId)
     setIsImporting(false)
     setIsImportDialogOpen(false)
     setExternalId("")
   }
+
+  const handleStartEdit = () => {
+    if (record) {
+      setEditedRecord({ ...record, notes: [...record.notes], comorbidities: [...record.comorbidities], allergies: [...record.allergies] })
+      setIsEditing(true)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setEditedRecord(null)
+    setNewCondition("")
+    setNewAllergy("")
+    setIsAddingNote(false)
+    setNewNoteContent("")
+    setEditingNoteId(null)
+    setEditingNoteContent("")
+  }
+
+  const handleSaveEdit = () => {
+    if (editedRecord) {
+      onSave?.(editedRecord)
+      setIsEditing(false)
+      setEditedRecord(null)
+    }
+  }
+
+  const handleAddCondition = () => {
+    if (newCondition.trim() && editedRecord) {
+      setEditedRecord({
+        ...editedRecord,
+        comorbidities: [...editedRecord.comorbidities, newCondition.trim()]
+      })
+      setNewCondition("")
+    }
+  }
+
+  const handleRemoveCondition = (index: number) => {
+    if (editedRecord) {
+      setEditedRecord({
+        ...editedRecord,
+        comorbidities: editedRecord.comorbidities.filter((_, i) => i !== index)
+      })
+    }
+  }
+
+  const handleAddAllergy = () => {
+    if (newAllergy.trim() && editedRecord) {
+      setEditedRecord({
+        ...editedRecord,
+        allergies: [...editedRecord.allergies, newAllergy.trim()]
+      })
+      setNewAllergy("")
+    }
+  }
+
+  const handleRemoveAllergy = (index: number) => {
+    if (editedRecord) {
+      setEditedRecord({
+        ...editedRecord,
+        allergies: editedRecord.allergies.filter((_, i) => i !== index)
+      })
+    }
+  }
+
+  const handleAddNote = () => {
+    if (newNoteContent.trim() && editedRecord) {
+      const newNote: ClinicalNote = {
+        id: `N${Date.now()}`,
+        author: record?.physician || "Dr. Juan Pérez",
+        date: new Date().toISOString().split('T')[0],
+        content: newNoteContent.trim()
+      }
+      setEditedRecord({
+        ...editedRecord,
+        notes: [newNote, ...editedRecord.notes]
+      })
+      setNewNoteContent("")
+      setIsAddingNote(false)
+    }
+  }
+
+  const handleEditNote = (noteId: string) => {
+    const note = editedRecord?.notes.find(n => n.id === noteId)
+    if (note) {
+      setEditingNoteId(noteId)
+      setEditingNoteContent(note.content)
+    }
+  }
+
+  const handleSaveNoteEdit = () => {
+    if (editingNoteId && editedRecord) {
+      setEditedRecord({
+        ...editedRecord,
+        notes: editedRecord.notes.map(note => 
+          note.id === editingNoteId 
+            ? { ...note, content: editingNoteContent } 
+            : note
+        )
+      })
+      setEditingNoteId(null)
+      setEditingNoteContent("")
+    }
+  }
+
+  const handleDeleteNote = (noteId: string) => {
+    if (editedRecord) {
+      setEditedRecord({
+        ...editedRecord,
+        notes: editedRecord.notes.filter(note => note.id !== noteId)
+      })
+    }
+  }
+
+  // Use edited record when editing, otherwise use original
+  const displayRecord = isEditing ? editedRecord : record
 
   if (!record) {
     return (
@@ -133,20 +278,53 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh }: Cli
             Ficha Clínica
           </CardTitle>
           <div className="flex items-center gap-2">
-            {record.externalSystemId && (
+            {displayRecord?.externalSystemId && !isEditing && (
               <Badge variant="outline" className="text-xs gap-1">
                 <ExternalLink className="h-3 w-3" />
-                {record.externalSystemId}
+                {displayRecord.externalSystemId}
               </Badge>
             )}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 px-2"
-              onClick={onRefresh}
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-            </Button>
+            {isEditing ? (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 px-2 gap-1"
+                  onClick={handleCancelEdit}
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Cancelar
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="h-7 px-2 gap-1"
+                  onClick={handleSaveEdit}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  Guardar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-7 px-2 gap-1"
+                  onClick={handleStartEdit}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Editar ficha
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 px-2"
+                  onClick={onRefresh}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -157,27 +335,64 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh }: Cli
             <Stethoscope className="h-4 w-4 text-primary" />
             <span className="text-xs font-medium text-muted-foreground">Diagnóstico Principal</span>
           </div>
-          <p className="text-sm font-medium text-foreground">{record.diagnosis}</p>
+          {isEditing && editedRecord ? (
+            <Input
+              value={editedRecord.diagnosis}
+              onChange={(e) => setEditedRecord({ ...editedRecord, diagnosis: e.target.value })}
+              className="text-sm"
+            />
+          ) : (
+            <p className="text-sm font-medium text-foreground">{displayRecord?.diagnosis}</p>
+          )}
         </div>
 
         <Separator className="bg-border" />
 
-        {/* Comorbidities */}
-        {record.comorbidities.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="h-4 w-4 text-warning" />
-              <span className="text-xs font-medium text-muted-foreground">Comorbilidades</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {record.comorbidities.map((c, i) => (
-                <Badge key={i} variant="secondary" className="text-xs">
-                  {c}
-                </Badge>
-              ))}
-            </div>
+        {/* Conditions (formerly Comorbidities) */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="h-4 w-4 text-warning" />
+            <span className="text-xs font-medium text-muted-foreground">Condiciones asociadas</span>
           </div>
-        )}
+          <div className="flex flex-wrap gap-1.5">
+            {(displayRecord?.comorbidities || []).map((c, i) => (
+              <Badge key={i} variant="secondary" className="text-xs gap-1">
+                {c}
+                {isEditing && (
+                  <button 
+                    onClick={() => handleRemoveCondition(i)}
+                    className="ml-1 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </Badge>
+            ))}
+            {(displayRecord?.comorbidities || []).length === 0 && !isEditing && (
+              <span className="text-sm text-muted-foreground">Sin condiciones asociadas</span>
+            )}
+          </div>
+          {isEditing && (
+            <div className="flex gap-2 mt-2">
+              <Input
+                placeholder="Nueva condición..."
+                value={newCondition}
+                onChange={(e) => setNewCondition(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCondition()}
+                className="text-sm h-8"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 px-2"
+                onClick={handleAddCondition}
+                disabled={!newCondition.trim()}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Allergies */}
         <div>
@@ -185,16 +400,43 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh }: Cli
             <AlertCircle className="h-4 w-4 text-destructive" />
             <span className="text-xs font-medium text-muted-foreground">Alergias</span>
           </div>
-          {record.allergies.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {record.allergies.map((a, i) => (
-                <Badge key={i} variant="destructive" className="text-xs">
-                  {a}
-                </Badge>
-              ))}
+          <div className="flex flex-wrap gap-1.5">
+            {(displayRecord?.allergies || []).map((a, i) => (
+              <Badge key={i} variant="destructive" className="text-xs gap-1">
+                {a}
+                {isEditing && (
+                  <button 
+                    onClick={() => handleRemoveAllergy(i)}
+                    className="ml-1 hover:opacity-70"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </Badge>
+            ))}
+            {(displayRecord?.allergies || []).length === 0 && !isEditing && (
+              <span className="text-sm text-muted-foreground">Sin alergias conocidas</span>
+            )}
+          </div>
+          {isEditing && (
+            <div className="flex gap-2 mt-2">
+              <Input
+                placeholder="Nueva alergia..."
+                value={newAllergy}
+                onChange={(e) => setNewAllergy(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddAllergy()}
+                className="text-sm h-8"
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 px-2"
+                onClick={handleAddAllergy}
+                disabled={!newAllergy.trim()}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
-          ) : (
-            <span className="text-sm text-muted-foreground">Sin alergias conocidas</span>
           )}
         </div>
 
@@ -205,35 +447,173 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh }: Cli
               <Droplets className="h-4 w-4 text-destructive" />
               <span className="text-xs font-medium text-muted-foreground">Tipo de Sangre</span>
             </div>
-            <Badge variant="outline" className="font-mono font-bold">
-              {record.bloodType}
-            </Badge>
+            {isEditing && editedRecord ? (
+              <Select
+                value={editedRecord.bloodType}
+                onValueChange={(value) => setEditedRecord({ ...editedRecord, bloodType: value })}
+              >
+                <SelectTrigger className="w-24 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {BLOOD_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge variant="outline" className="font-mono font-bold">
+                {displayRecord?.bloodType}
+              </Badge>
+            )}
           </div>
         </div>
 
         <Separator className="bg-border" />
 
-        {/* Notes */}
-        {record.notes && (
-          <div>
+        {/* Clinical Notes - Redesigned */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-muted-foreground">Notas Clínicas</span>
-            <p className="text-sm text-foreground mt-1 p-3 rounded-md bg-muted/50">
-              {record.notes}
-            </p>
+            {isEditing && !isAddingNote && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 px-2 gap-1"
+                onClick={() => setIsAddingNote(true)}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Nueva nota
+              </Button>
+            )}
           </div>
-        )}
 
-        {/* Metadata */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
-          <div className="flex items-center gap-1">
-            <User className="h-3 w-3" />
-            {record.physician}
-          </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            Actualizado: {record.lastUpdated}
+          {/* New note form */}
+          {isEditing && isAddingNote && (
+            <div className="mb-3 p-3 rounded-md border border-border bg-muted/30">
+              <Textarea
+                placeholder="Escribir nueva nota clínica..."
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                className="text-sm min-h-20 mb-2"
+              />
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    setIsAddingNote(false)
+                    setNewNoteContent("")
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleAddNote}
+                  disabled={!newNoteContent.trim()}
+                >
+                  Agregar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Notes list */}
+          <div className="space-y-3">
+            {(displayRecord?.notes || []).map((note) => (
+              <div 
+                key={note.id} 
+                className="p-3 rounded-md bg-muted/50 border border-border/50"
+              >
+                {editingNoteId === note.id ? (
+                  <>
+                    <Textarea
+                      value={editingNoteContent}
+                      onChange={(e) => setEditingNoteContent(e.target.value)}
+                      className="text-sm min-h-20 mb-2"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setEditingNoteId(null)
+                          setEditingNoteContent("")
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        onClick={handleSaveNoteEdit}
+                      >
+                        Guardar
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          {note.author}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {note.date}
+                        </span>
+                      </div>
+                      {isEditing && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleEditNote(note.id)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteNote(note.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm text-foreground">{note.content}</p>
+                  </>
+                )}
+              </div>
+            ))}
+            {(displayRecord?.notes || []).length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No hay notas clínicas registradas
+              </p>
+            )}
           </div>
         </div>
+
+        {/* Metadata */}
+        {!isEditing && (
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
+            <div className="flex items-center gap-1">
+              <User className="h-3 w-3" />
+              {displayRecord?.physician}
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              Actualizado: {displayRecord?.lastUpdated}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
