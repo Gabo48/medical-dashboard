@@ -26,6 +26,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { 
   MessageSquare, 
   Send,
@@ -37,7 +42,9 @@ import {
   Check,
   CheckCheck,
   AlertCircle,
-  Phone
+  Phone,
+  CalendarClock,
+  ExternalLink
 } from "lucide-react"
 import type { Message, Caregiver, Patient, MessageChannel, MessageRecipientType } from "@/lib/mock-data"
 import { getRelationshipLabel, getMessageStatusLabel, getMessageChannelLabel } from "@/lib/mock-data"
@@ -52,7 +59,9 @@ interface MessagingPanelProps {
     channel: MessageChannel
     subject: string
     content: string
+    scheduledAt?: Date
   }) => void
+  onOpenChat?: (patientId: string) => void
 }
 
 const messageTemplates = [
@@ -64,7 +73,7 @@ const messageTemplates = [
   { id: "caregiver_alert", subject: "Alerta importante", content: "Es importante que estén al tanto de la situación actual del paciente. Por favor comuníquense con nosotros." },
 ]
 
-export function MessagingPanel({ patient, messages, caregivers, onSendMessage }: MessagingPanelProps) {
+export function MessagingPanel({ patient, messages, caregivers, onSendMessage, onOpenChat }: MessagingPanelProps) {
   const [isComposeOpen, setIsComposeOpen] = useState(false)
   const [recipientType, setRecipientType] = useState<MessageRecipientType>("patient")
   const [selectedRecipient, setSelectedRecipient] = useState<string>("")
@@ -72,6 +81,9 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage }:
   const [subject, setSubject] = useState("")
   const [content, setContent] = useState("")
   const [selectedTemplate, setSelectedTemplate] = useState<string>("")
+  const [sendOption, setSendOption] = useState<"now" | "scheduled">("now")
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined)
+  const [scheduledTime, setScheduledTime] = useState<string>("09:00")
 
   const handleTemplateSelect = (templateId: string) => {
     const template = messageTemplates.find(t => t.id === templateId)
@@ -84,13 +96,22 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage }:
 
   const handleSend = () => {
     if (!selectedRecipient || !subject.trim() || !content.trim()) return
+    if (sendOption === "scheduled" && !scheduledDate) return
+    
+    let scheduledAt: Date | undefined = undefined
+    if (sendOption === "scheduled" && scheduledDate) {
+      const [hours, minutes] = scheduledTime.split(":").map(Number)
+      scheduledAt = new Date(scheduledDate)
+      scheduledAt.setHours(hours, minutes, 0, 0)
+    }
     
     onSendMessage?.({
       recipientType,
       recipientId: selectedRecipient,
       channel,
       subject: subject.trim(),
-      content: content.trim()
+      content: content.trim(),
+      scheduledAt
     })
     
     setIsComposeOpen(false)
@@ -104,6 +125,9 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage }:
     setSubject("")
     setContent("")
     setSelectedTemplate("")
+    setSendOption("now")
+    setScheduledDate(undefined)
+    setScheduledTime("09:00")
   }
 
   const patientMessages = messages.filter(m => m.recipientType === "patient")
@@ -137,15 +161,15 @@ export function MessagingPanel({ patient, messages, caregivers, onSendMessage }:
           <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="h-7 gap-1">
-                <Send className="h-3.5 w-3.5" />
-                Nuevo mensaje
+                <CalendarClock className="h-3.5 w-3.5" />
+                Programar mensaje
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-lg">
               <DialogHeader>
-                <DialogTitle>Enviar Mensaje</DialogTitle>
+                <DialogTitle>Programar Mensaje</DialogTitle>
                 <DialogDescription>
-                  Envíe un mensaje al paciente o a su red de apoyo.
+                  Envíe un mensaje ahora o prográmelo para más tarde.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
