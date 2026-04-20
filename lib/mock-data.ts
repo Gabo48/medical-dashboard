@@ -1,3 +1,19 @@
+export type RiesgoCondicion = 
+  | "adherencia_muy_baja"      // Adherencia < 40%
+  | "adherencia_baja"          // Adherencia entre 40–60%
+  | "ghq12_alto"               // GHQ-12 ≥ 7
+  | "ghq12_moderado"           // GHQ-12 entre 3–6
+  | "readiness_bajo"           // Readiness ≤ 2
+  | "inasistencia_alta"        // Inasistencia a controles > 30%
+  | "vive_solo"                // Vive solo
+  | "silencio_prolongado"      // Silencio > 7 días sin respuesta
+  | "caida_brusca"             // Caída brusca de nivel (≥4 a ≤2 en menos de 7 días)
+
+export interface RiesgoAbandono {
+  nivel: 1 | 2 | 3 | 4 | 5  // 1 = Muy alto, 5 = Muy bajo
+  condicionesActivas: RiesgoCondicion[]
+}
+
 export interface Patient {
   id: string
   name: string
@@ -27,6 +43,7 @@ export interface Patient {
   treatmentDays: number
   avatar: string
   treatmentType: "obesity" | "diabetes" | "hypertension"
+  riesgoAbandono: RiesgoAbandono
 }
 
 export interface WeightHistory {
@@ -94,7 +111,11 @@ export const patients: Patient[] = [
     messagesCount: 156,
     treatmentDays: 90,
     avatar: "MG",
-    treatmentType: "obesity"
+    treatmentType: "obesity",
+    riesgoAbandono: {
+      nivel: 4,
+      condicionesActivas: []
+    }
   },
   {
     id: "P002",
@@ -124,7 +145,11 @@ export const patients: Patient[] = [
     messagesCount: 45,
     treatmentDays: 75,
     avatar: "CR",
-    treatmentType: "obesity"
+    treatmentType: "obesity",
+    riesgoAbandono: {
+      nivel: 2,
+      condicionesActivas: ["adherencia_baja", "readiness_bajo", "inasistencia_alta"]
+    }
   },
   {
     id: "P003",
@@ -154,7 +179,11 @@ export const patients: Patient[] = [
     messagesCount: 234,
     treatmentDays: 120,
     avatar: "AM",
-    treatmentType: "diabetes"
+    treatmentType: "diabetes",
+    riesgoAbandono: {
+      nivel: 5,
+      condicionesActivas: []
+    }
   },
   {
     id: "P004",
@@ -184,7 +213,11 @@ export const patients: Patient[] = [
     messagesCount: 78,
     treatmentDays: 60,
     avatar: "RS",
-    treatmentType: "hypertension"
+    treatmentType: "hypertension",
+    riesgoAbandono: {
+      nivel: 3,
+      condicionesActivas: ["ghq12_moderado"]
+    }
   },
   {
     id: "P005",
@@ -214,7 +247,11 @@ export const patients: Patient[] = [
     messagesCount: 12,
     treatmentDays: 45,
     avatar: "LF",
-    treatmentType: "obesity"
+    treatmentType: "obesity",
+    riesgoAbandono: {
+      nivel: 1,
+      condicionesActivas: ["adherencia_muy_baja", "ghq12_alto", "silencio_prolongado", "vive_solo"]
+    }
   },
   {
     id: "P006",
@@ -244,7 +281,11 @@ export const patients: Patient[] = [
     messagesCount: 189,
     treatmentDays: 100,
     avatar: "MT",
-    treatmentType: "diabetes"
+    treatmentType: "diabetes",
+    riesgoAbandono: {
+      nivel: 5,
+      condicionesActivas: []
+    }
   }
 ]
 
@@ -371,6 +412,55 @@ export const getMoodHistory = (patientId: string): MoodHistory[] => {
 }
 
 export type EstadoEmocionalLevel = "sin_malestar" | "malestar_moderado" | "malestar_elevado"
+
+// Riesgo de abandono helpers
+export const getRiesgoLabel = (nivel: number): string => {
+  switch (nivel) {
+    case 1: return "Muy alto"
+    case 2: return "Alto"
+    case 3: return "Moderado"
+    case 4: return "Bajo"
+    case 5: return "Muy bajo"
+    default: return ""
+  }
+}
+
+export const getRiesgoColor = (nivel: number): string => {
+  switch (nivel) {
+    case 1: return "bg-destructive text-destructive-foreground"
+    case 2: return "bg-orange-500 text-white"
+    case 3: return "bg-warning text-warning-foreground"
+    case 4: return "bg-lime-500 text-white"
+    case 5: return "bg-success text-success-foreground"
+    default: return "bg-muted text-muted-foreground"
+  }
+}
+
+export const getCondicionLabel = (condicion: RiesgoCondicion): string => {
+  switch (condicion) {
+    case "adherencia_muy_baja": return "Adherencia < 40%"
+    case "adherencia_baja": return "Adherencia entre 40–60%"
+    case "ghq12_alto": return "GHQ-12 ≥ 7"
+    case "ghq12_moderado": return "GHQ-12 entre 3–6"
+    case "readiness_bajo": return "Readiness ≤ 2"
+    case "inasistencia_alta": return "Inasistencia a controles > 30%"
+    case "vive_solo": return "Vive solo/a"
+    case "silencio_prolongado": return "Silencio > 7 días sin respuesta"
+    case "caida_brusca": return "Caída brusca de nivel"
+    default: return ""
+  }
+}
+
+export const getAccionRecomendada = (nivel: number): string => {
+  switch (nivel) {
+    case 1: return "Escalada inmediata. Contacto telefónico. Alerta ROJA."
+    case 2: return "Re-engagement. Contacto diario. Alerta NARANJA."
+    case 3: return "Educar y ofrecer estrategias. Contacto cada 2–3 días. Alerta AMARILLA."
+    case 4: return "Seguimiento normal cada 3–5 días. Refuerzo positivo."
+    case 5: return "Reducir frecuencia de contacto. Seguimiento semanal."
+    default: return ""
+  }
+}
 
 export const getEstadoEmocionalLevel = (score: number): { level: EstadoEmocionalLevel; label: string; color: string } => {
   if (score <= 3) {
