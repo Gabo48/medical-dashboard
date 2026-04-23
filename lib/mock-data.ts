@@ -433,12 +433,12 @@ export const getRiesgoLabel = (nivel: number): string => {
 
 export const getRiesgoColor = (nivel: number): string => {
   switch (nivel) {
-    case 1: return "bg-destructive text-destructive-foreground"
-    case 2: return "bg-orange-500 text-white"
-    case 3: return "bg-warning text-warning-foreground"
-    case 4: return "bg-lime-500 text-white"
-    case 5: return "bg-success text-success-foreground"
-    default: return "bg-muted text-muted-foreground"
+    case 1: return "bg-destructive/20 text-destructive"
+    case 2: return "bg-chart-4/20 text-chart-4"
+    case 3: return "bg-warning/20 text-warning"
+    case 4: return "bg-chart-2/20 text-chart-2"
+    case 5: return "bg-success/20 text-success"
+    default: return "bg-muted/20 text-muted-foreground"
   }
 }
 
