@@ -17,7 +17,6 @@ import { MoodChart } from "./mood-chart"
 import { DailyAdherenceChart } from "./daily-adherence-chart"
 import { WeeklyAdherenceChart } from "./weekly-adherence-chart"
 import { AdherenceChartsContainer } from "./adherence-charts-container"
-import { SideEffectsChart } from "./side-effects-chart"
 import { SymptomsList } from "./symptoms-list"
 import { InteractionsTable } from "./interactions-table"
 import { IntentsByType } from "./intents-by-type"
@@ -25,6 +24,7 @@ import { ClinicalRecordCard } from "./clinical-record-card"
 import { MedicationPlanCard } from "./medication-plan-card"
 import { MessagingPanel } from "./messaging-panel"
 import { ClinicalMetricsSection } from "./clinical-metrics-section"
+import { ClinicalProfileTab } from "./clinical-profile-tab"
 import type { Patient } from "@/lib/mock-data"
 import { getPatientClinicalMetrics } from "@/lib/clinical-metrics-data"
 import { 
@@ -34,7 +34,6 @@ import {
   getPatientSymptoms,
   getDailyAdherenceHistory,
   getWeeklyAdherenceHistory,
-  getSideEffectsReport,
   getPatientInteractions,
   getPatientIntents,
   getMedicalEventFrequency,
@@ -61,7 +60,8 @@ import {
   CalendarClock,
   User,
   BarChart3,
-  Info
+  Info,
+  Heart
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
@@ -104,7 +104,6 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
   const symptoms = getPatientSymptoms(patient.id)
   const dailyAdherence = getDailyAdherenceHistory(patient.id)
   const weeklyAdherence = getWeeklyAdherenceHistory(patient.id)
-  const sideEffects = getSideEffectsReport(patient.id)
   const interactions = getPatientInteractions(patient.id)
   const patientIntents = getPatientIntents(patient.id)
   const medicalEventFrequency = getMedicalEventFrequency(patient.id)
@@ -146,7 +145,7 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
               <div>
                 <h2 className="text-xl font-bold text-foreground">{patient.name}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {patient.age} anos · {patient.gender === "M" ? "Masculino" : "Femenino"} · ID: {patient.id}
+                  RUT: {patient.rut} · {patient.age} anos · {patient.gender === "M" ? "Masculino" : "Femenino"} · ID: {patient.id}
                 </p>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <Badge variant="outline" className="text-xs">
@@ -309,6 +308,10 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             <User className="h-4 w-4" />
             Informacion
           </TabsTrigger>
+          <TabsTrigger value="clinical-profile" className="gap-2">
+            <Heart className="h-4 w-4" />
+            Perfil Clinico
+          </TabsTrigger>
           <TabsTrigger value="stats" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             Estadisticas
@@ -324,7 +327,17 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
           {/* Clinical Metrics Section - replaces Quick Stats with extended metrics */}
           <ClinicalMetricsSection metrics={clinicalMetrics} patient={patient} />
 
-          {/* Risk Alerts & Factors */}
+          {/* Clinical Record - Now wider, taking 2 columns */}
+          <div className="grid grid-cols-1 gap-4">
+            <ClinicalRecordCard 
+              record={clinicalRecord} 
+              patient={patient}
+              onImport={(externalId) => console.log("[v0] Import clinical record:", externalId)}
+              onRefresh={() => console.log("[v0] Refresh clinical record")}
+            />
+          </div>
+
+          {/* Risk Factors and Medication Plan */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="bg-card border-border">
               <CardHeader className="pb-2">
@@ -393,6 +406,14 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
                 </div>
               </CardContent>
             </Card>
+            <MedicationPlanCard 
+              plan={medicationPlan}
+              patientId={patient.id}
+              onUpdateMedication={(medId, updates) => console.log("Update medication:", medId, updates)}
+              onAddMedication={(med) => console.log("Add medication:", med)}
+              onDeleteMedication={(medId) => console.log("Delete medication:", medId)}
+              onUpdateNotes={(notes) => console.log("Update notes:", notes)}
+            />
           </div>
 
           {/* Emotional State */}
@@ -445,28 +466,13 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             </CardContent>
           </Card>
 
-          {/* Clinical Record & Medication Plan */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <ClinicalRecordCard 
-              record={clinicalRecord} 
-              patient={patient}
-              onImport={(externalId) => console.log("[v0] Import clinical record:", externalId)}
-              onRefresh={() => console.log("[v0] Refresh clinical record")}
-            />
-            <MedicationPlanCard 
-              plan={medicationPlan}
-              patientId={patient.id}
-              onUpdateMedication={(medId, updates) => console.log("Update medication:", medId, updates)}
-              onAddMedication={(med) => console.log("Add medication:", med)}
-              onDeleteMedication={(medId) => console.log("Delete medication:", medId)}
-              onUpdateNotes={(notes) => console.log("Update notes:", notes)}
-            />
-          </div>
-
-
-
           {/* Symptoms Table */}
           <SymptomsList symptoms={symptoms} />
+        </TabsContent>
+
+        {/* Clinical Profile Tab */}
+        <TabsContent value="clinical-profile" className="space-y-4 mt-4">
+          <ClinicalProfileTab metrics={clinicalMetrics} />
         </TabsContent>
 
         {/* Statistics Tab */}
@@ -590,15 +596,9 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             adherenceHistoryData={adherenceHistory}
           />
 
-          {/* Side Effects Chart */}
-          <SideEffectsChart data={sideEffects} />
-
           {/* Weight & Mood Charts */}
           <WeightChart data={weightHistory} />
           <MoodChart data={moodHistory} />
-
-          {/* Intents by Type */}
-          <IntentsByType data={patientIntents} totalMessages={patient.messagesCount} />
         </TabsContent>
 
         {/* Communication Tab */}
@@ -613,6 +613,9 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
           {/* Interactions History */}
           <InteractionsTable interactions={interactions} />
+
+          {/* Intents by Type */}
+          <IntentsByType data={patientIntents} totalMessages={patient.messagesCount} />
         </TabsContent>
       </Tabs>
     </div>

@@ -17,6 +17,7 @@ export interface RiesgoAbandono {
 export interface Patient {
   id: string
   name: string
+  rut: string
   age: number
   gender: "M" | "F"
   weight: number
@@ -86,6 +87,7 @@ export const patients: Patient[] = [
   {
     id: "P001",
     name: "María García",
+    rut: "12345678-9",
     age: 45,
     gender: "F",
     weight: 92,
@@ -120,6 +122,7 @@ export const patients: Patient[] = [
   {
     id: "P002",
     name: "Carlos Rodríguez",
+    rut: "87654321-5",
     age: 52,
     gender: "M",
     weight: 118,
@@ -154,6 +157,7 @@ export const patients: Patient[] = [
   {
     id: "P003",
     name: "Ana Martínez",
+    rut: "11223344-6",
     age: 38,
     gender: "F",
     weight: 78,
@@ -188,6 +192,7 @@ export const patients: Patient[] = [
   {
     id: "P004",
     name: "Roberto Sánchez",
+    rut: "55443322-1",
     age: 61,
     gender: "M",
     weight: 102,
@@ -222,6 +227,7 @@ export const patients: Patient[] = [
   {
     id: "P005",
     name: "Laura Fernández",
+    rut: "66778899-2",
     age: 29,
     gender: "F",
     weight: 85,
@@ -427,12 +433,12 @@ export const getRiesgoLabel = (nivel: number): string => {
 
 export const getRiesgoColor = (nivel: number): string => {
   switch (nivel) {
-    case 1: return "bg-destructive text-destructive-foreground"
-    case 2: return "bg-orange-500 text-white"
-    case 3: return "bg-warning text-warning-foreground"
-    case 4: return "bg-lime-500 text-white"
-    case 5: return "bg-success text-success-foreground"
-    default: return "bg-muted text-muted-foreground"
+    case 1: return "bg-destructive/20 text-destructive"
+    case 2: return "bg-chart-4/20 text-chart-4"
+    case 3: return "bg-warning/20 text-warning"
+    case 4: return "bg-chart-2/20 text-chart-2"
+    case 5: return "bg-success/20 text-success"
+    default: return "bg-muted/20 text-muted-foreground"
   }
 }
 
