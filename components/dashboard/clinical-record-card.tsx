@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,11 +28,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { 
+  FileText, 
+  Download, 
+  Upload, 
   RefreshCw,
   Droplets,
   AlertCircle,
   Stethoscope,
-  Calendar as CalendarIcon,
+  Calendar,
   User,
   ExternalLink,
   Pencil,
@@ -333,16 +336,68 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
   if (!record) {
     return (
       <Card className="bg-card border-border">
-        <CardContent className="p-8">
-          <div className="flex flex-col items-center justify-center text-center">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              Ficha Clínica
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
             <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
             <p className="text-sm text-muted-foreground mb-4">
-              No hay ficha clinica registrada para este paciente
+              No hay ficha clínica registrada para este paciente
             </p>
-            <Button variant="outline" className="gap-2" onClick={() => onImport?.("")}>
-              <Plus className="h-4 w-4" />
-              Crear ficha clinica
-            </Button>
+            <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Upload className="h-4 w-4" />
+                  Importar desde sistema externo
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Importar Ficha Clínica</DialogTitle>
+                  <DialogDescription>
+                    Ingrese el ID del expediente en el sistema externo para importar los datos clínicos del paciente.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="externalId">ID de Sistema Externo</Label>
+                    <Input
+                      id="externalId"
+                      placeholder="Ej: EXT-2024-12345"
+                      value={externalId}
+                      onChange={(e) => setExternalId(e.target.value)}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Se conectará al sistema HIS/EMR configurado para obtener los datos del paciente.
+                  </p>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleImport} disabled={!externalId.trim() || isImporting}>
+                    {isImporting ? (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                        Importando...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Importar
+                      </>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>
@@ -426,127 +481,7 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
           )}
         </div>
 
-      {/* Main Content - 2 Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* S1 - Identificacion */}
-        <Card className="bg-card border-border">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-              <User className="h-4 w-4 text-primary" />
-              Identificacion
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">RUT</Label>
-                {isEditing ? (
-                  <Input 
-                    value={formData.rut}
-                    onChange={(e) => setFormData({...formData, rut: e.target.value})}
-                    className="h-8 text-sm"
-                  />
-                ) : (
-                  <p className="text-sm font-medium">{extendedRecord.rut}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Fecha de Nacimiento</Label>
-                {isEditing ? (
-                  <Popover open={birthDateOpen} onOpenChange={setBirthDateOpen}>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full h-8 justify-start text-sm font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.birthDate ? format(new Date(formData.birthDate), "dd/MM/yyyy", { locale: es }) : "Seleccionar"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.birthDate ? new Date(formData.birthDate) : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            setFormData({...formData, birthDate: format(date, "yyyy-MM-dd")})
-                          }
-                          setBirthDateOpen(false)
-                        }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                ) : (
-                  <p className="text-sm font-medium">
-                    {extendedRecord.birthDate ? format(new Date(extendedRecord.birthDate), "dd/MM/yyyy", { locale: es }) : "-"}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Sexo</Label>
-                {isEditing ? (
-                  <Select value={formData.sex} onValueChange={(v) => setFormData({...formData, sex: v as "M" | "F"})}>
-                    <SelectTrigger className="h-8 text-sm w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">Masculino</SelectItem>
-                      <SelectItem value="F">Femenino</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <p className="text-sm font-medium">{extendedRecord.sex === "M" ? "Masculino" : "Femenino"}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Prevision</Label>
-                {isEditing ? (
-                  <Select value={formData.healthInsurance} onValueChange={(v) => setFormData({...formData, healthInsurance: v as "Fonasa" | "Isapre"})}>
-                    <SelectTrigger className="h-8 text-sm w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Fonasa">Fonasa</SelectItem>
-                      <SelectItem value="Isapre">Isapre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <p className="text-sm font-medium">{extendedRecord.healthInsurance}</p>
-                )}
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                <Phone className="h-3 w-3" />
-                Telefono
-              </Label>
-              {isEditing ? (
-                <Input 
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  className="h-8 text-sm"
-                />
-              ) : (
-                <p className="text-sm font-medium">{extendedRecord.phone}</p>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                Direccion
-              </Label>
-              {isEditing ? (
-                <Input 
-                  value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
-                  className="h-8 text-sm"
-                />
-              ) : (
-                <p className="text-sm font-medium">{extendedRecord.address}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <Separator className="bg-border" />
 
         {/* Conditions (formerly Comorbidities) - Grouped by Category */}
         <div>
@@ -771,44 +706,12 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
           )}
         </div>
 
-      {/* Footer */}
-      <Card className="bg-card border-border">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-6 text-sm">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Profesional:</span>
-                <span className="font-medium">{extendedRecord.responsibleProfessional}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Stethoscope className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Especialidad:</span>
-                <span className="font-medium">{extendedRecord.specialty}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Ultima actualizacion:</span>
-                <span className="font-medium">{extendedRecord.lastUpdated}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {extendedRecord.signatureStatus === "signed" ? (
-                  <Badge variant="default" className="text-xs gap-1">
-                    <CheckCircle className="h-3 w-3" />
-                    Firmado electronicamente
-                  </Badge>
-                ) : extendedRecord.signatureStatus === "pending" ? (
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    <Clock className="h-3 w-3" />
-                    Pendiente de firma
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <FileText className="h-3 w-3" />
-                    Borrador
-                  </Badge>
-                )}
-              </div>
+        {/* Blood Type */}
+        <div className="flex items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Droplets className="h-4 w-4 text-destructive" />
+              <span className="text-xs font-medium text-muted-foreground">Tipo de Sangre</span>
             </div>
             {isEditing && editedRecord ? (
               <Select
@@ -832,8 +735,9 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
               </Badge>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <Separator className="bg-border" />
 
         {/* Clinical Notes - With Popover */}
         <div>
@@ -946,15 +850,7 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
               </PopoverContent>
             </Popover>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSuspendDialogOpen(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleSuspendMedication} disabled={!suspendReason.trim()}>
-              <Pause className="h-4 w-4 mr-2" />
-              Suspender
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
       </CardContent>
     </Card>
   )
