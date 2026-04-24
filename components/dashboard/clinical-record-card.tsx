@@ -955,6 +955,7 @@ export function ClinicalRecordCard({ record, patient, onImport, onRefresh, onSav
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
