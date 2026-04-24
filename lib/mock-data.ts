@@ -1,6 +1,23 @@
+export type RiesgoCondicion = 
+  | "adherencia_muy_baja"      // Adherencia < 40%
+  | "adherencia_baja"          // Adherencia entre 40–60%
+  | "ghq12_alto"               // GHQ-12 ≥ 7
+  | "ghq12_moderado"           // GHQ-12 entre 3–6
+  | "readiness_bajo"           // Readiness ≤ 2
+  | "inasistencia_alta"        // Inasistencia a controles > 30%
+  | "vive_solo"                // Vive solo
+  | "silencio_prolongado"      // Silencio > 7 días sin respuesta
+  | "caida_brusca"             // Caída brusca de nivel (≥4 a ≤2 en menos de 7 días)
+
+export interface RiesgoAbandono {
+  nivel: 1 | 2 | 3 | 4 | 5  // 1 = Muy alto, 5 = Muy bajo
+  condicionesActivas: RiesgoCondicion[]
+}
+
 export interface Patient {
   id: string
   name: string
+  rut: string
   age: number
   gender: "M" | "F"
   weight: number
@@ -27,6 +44,7 @@ export interface Patient {
   treatmentDays: number
   avatar: string
   treatmentType: "obesity" | "diabetes" | "hypertension"
+  riesgoAbandono: RiesgoAbandono
 }
 
 export interface WeightHistory {
@@ -48,11 +66,20 @@ export interface MoodHistory {
   motivation: number
 }
 
+export type SymptomCategory = 
+  | "gastrointestinal"
+  | "neurologico"
+  | "metabolico"
+  | "musculoesqueletico"
+  | "psicologico"
+  | "cardiovascular"
+
 export interface SymptomReport {
   id: string
   patientId: string
   symptom: string
-  severity: 1 | 2 | 3
+  category: SymptomCategory
+  severity: number // 0-7 scale
   date: string
 }
 
@@ -60,6 +87,7 @@ export const patients: Patient[] = [
   {
     id: "P001",
     name: "María García",
+    rut: "12345678-9",
     age: 45,
     gender: "F",
     weight: 92,
@@ -85,11 +113,16 @@ export const patients: Patient[] = [
     messagesCount: 156,
     treatmentDays: 90,
     avatar: "MG",
-    treatmentType: "obesity"
+    treatmentType: "obesity",
+    riesgoAbandono: {
+      nivel: 4,
+      condicionesActivas: []
+    }
   },
   {
     id: "P002",
     name: "Carlos Rodríguez",
+    rut: "87654321-5",
     age: 52,
     gender: "M",
     weight: 118,
@@ -115,11 +148,16 @@ export const patients: Patient[] = [
     messagesCount: 45,
     treatmentDays: 75,
     avatar: "CR",
-    treatmentType: "obesity"
+    treatmentType: "obesity",
+    riesgoAbandono: {
+      nivel: 2,
+      condicionesActivas: ["adherencia_baja", "readiness_bajo", "inasistencia_alta"]
+    }
   },
   {
     id: "P003",
     name: "Ana Martínez",
+    rut: "11223344-6",
     age: 38,
     gender: "F",
     weight: 78,
@@ -145,11 +183,16 @@ export const patients: Patient[] = [
     messagesCount: 234,
     treatmentDays: 120,
     avatar: "AM",
-    treatmentType: "diabetes"
+    treatmentType: "diabetes",
+    riesgoAbandono: {
+      nivel: 5,
+      condicionesActivas: []
+    }
   },
   {
     id: "P004",
     name: "Roberto Sánchez",
+    rut: "55443322-1",
     age: 61,
     gender: "M",
     weight: 102,
@@ -175,11 +218,16 @@ export const patients: Patient[] = [
     messagesCount: 78,
     treatmentDays: 60,
     avatar: "RS",
-    treatmentType: "hypertension"
+    treatmentType: "hypertension",
+    riesgoAbandono: {
+      nivel: 3,
+      condicionesActivas: ["ghq12_moderado"]
+    }
   },
   {
     id: "P005",
     name: "Laura Fernández",
+    rut: "66778899-2",
     age: 29,
     gender: "F",
     weight: 85,
@@ -205,7 +253,11 @@ export const patients: Patient[] = [
     messagesCount: 12,
     treatmentDays: 45,
     avatar: "LF",
-    treatmentType: "obesity"
+    treatmentType: "obesity",
+    riesgoAbandono: {
+      nivel: 1,
+      condicionesActivas: ["adherencia_muy_baja", "ghq12_alto", "silencio_prolongado", "vive_solo"]
+    }
   },
   {
     id: "P006",
@@ -235,7 +287,11 @@ export const patients: Patient[] = [
     messagesCount: 189,
     treatmentDays: 100,
     avatar: "MT",
-    treatmentType: "diabetes"
+    treatmentType: "diabetes",
+    riesgoAbandono: {
+      nivel: 5,
+      condicionesActivas: []
+    }
   }
 ]
 
@@ -342,10 +398,11 @@ export const getSideEffectsReport = (patientId: string): SideEffectReport[] => {
     return acc
   }, {} as Record<string, { count: number; maxSeverity: number }>)
 
+  // Map 0-7 scale to mild/moderate/severe: 0-2 = mild, 3-5 = moderate, 6-7 = severe
   return Object.entries(grouped).map(([name, data]) => ({
     name,
     count: data.count,
-    severity: data.maxSeverity === 1 ? "mild" : data.maxSeverity === 2 ? "moderate" : "severe"
+    severity: data.maxSeverity <= 2 ? "mild" : data.maxSeverity <= 5 ? "moderate" : "severe"
   })).sort((a, b) => b.count - a.count)
 }
 
@@ -362,6 +419,55 @@ export const getMoodHistory = (patientId: string): MoodHistory[] => {
 
 export type EstadoEmocionalLevel = "sin_malestar" | "malestar_moderado" | "malestar_elevado"
 
+// Riesgo de abandono helpers
+export const getRiesgoLabel = (nivel: number): string => {
+  switch (nivel) {
+    case 1: return "Muy alto"
+    case 2: return "Alto"
+    case 3: return "Moderado"
+    case 4: return "Bajo"
+    case 5: return "Muy bajo"
+    default: return ""
+  }
+}
+
+export const getRiesgoColor = (nivel: number): string => {
+  switch (nivel) {
+    case 1: return "bg-destructive/20 text-destructive"
+    case 2: return "bg-chart-4/20 text-chart-4"
+    case 3: return "bg-warning/20 text-warning"
+    case 4: return "bg-chart-2/20 text-chart-2"
+    case 5: return "bg-success/20 text-success"
+    default: return "bg-muted/20 text-muted-foreground"
+  }
+}
+
+export const getCondicionLabel = (condicion: RiesgoCondicion): string => {
+  switch (condicion) {
+    case "adherencia_muy_baja": return "Adherencia < 40%"
+    case "adherencia_baja": return "Adherencia entre 40–60%"
+    case "ghq12_alto": return "GHQ-12 ≥ 7"
+    case "ghq12_moderado": return "GHQ-12 entre 3–6"
+    case "readiness_bajo": return "Readiness ≤ 2"
+    case "inasistencia_alta": return "Inasistencia a controles > 30%"
+    case "vive_solo": return "Vive solo/a"
+    case "silencio_prolongado": return "Silencio > 7 días sin respuesta"
+    case "caida_brusca": return "Caída brusca de nivel"
+    default: return ""
+  }
+}
+
+export const getAccionRecomendada = (nivel: number): string => {
+  switch (nivel) {
+    case 1: return "Escalada inmediata. Contacto telefónico. Alerta ROJA."
+    case 2: return "Re-engagement. Contacto diario. Alerta NARANJA."
+    case 3: return "Educar y ofrecer estrategias. Contacto cada 2–3 días. Alerta AMARILLA."
+    case 4: return "Seguimiento normal cada 3–5 días. Refuerzo positivo."
+    case 5: return "Reducir frecuencia de contacto. Seguimiento semanal."
+    default: return ""
+  }
+}
+
 export const getEstadoEmocionalLevel = (score: number): { level: EstadoEmocionalLevel; label: string; color: string } => {
   if (score <= 3) {
     return { level: "sin_malestar", label: "Sin malestar", color: "success" }
@@ -373,21 +479,58 @@ export const getEstadoEmocionalLevel = (score: number): { level: EstadoEmocional
 }
 
 export const symptoms: SymptomReport[] = [
-  { id: "S001", patientId: "P001", symptom: "Náuseas leves", severity: 1, date: "2024-01-14" },
-  { id: "S002", patientId: "P001", symptom: "Fatiga", severity: 2, date: "2024-01-12" },
-  { id: "S003", patientId: "P002", symptom: "Mareos", severity: 2, date: "2024-01-13" },
-  { id: "S004", patientId: "P002", symptom: "Dolor de cabeza", severity: 2, date: "2024-01-11" },
-  { id: "S005", patientId: "P002", symptom: "Estreñimiento", severity: 2, date: "2024-01-10" },
-  { id: "S006", patientId: "P002", symptom: "Insomnio", severity: 3, date: "2024-01-09" },
-  { id: "S007", patientId: "P004", symptom: "Náuseas", severity: 2, date: "2024-01-14" },
-  { id: "S008", patientId: "P004", symptom: "Fatiga", severity: 2, date: "2024-01-13" },
-  { id: "S009", patientId: "P004", symptom: "Diarrea", severity: 2, date: "2024-01-11" },
-  { id: "S010", patientId: "P005", symptom: "Náuseas severas", severity: 3, date: "2024-01-05" },
-  { id: "S011", patientId: "P005", symptom: "Vómitos", severity: 3, date: "2024-01-04" },
-  { id: "S012", patientId: "P005", symptom: "Fatiga extrema", severity: 3, date: "2024-01-03" },
-  { id: "S013", patientId: "P005", symptom: "Dolor abdominal", severity: 2, date: "2024-01-02" },
-  { id: "S014", patientId: "P005", symptom: "Mareos", severity: 2, date: "2024-01-01" },
-  { id: "S015", patientId: "P006", symptom: "Fatiga leve", severity: 1, date: "2024-01-10" },
+  // Patient P001 - Multiple reports with severity evolution
+  { id: "S001", patientId: "P001", symptom: "Náuseas", category: "gastrointestinal", severity: 2, date: "2024-01-14" },
+  { id: "S001b", patientId: "P001", symptom: "Náuseas", category: "gastrointestinal", severity: 3, date: "2024-01-10" },
+  { id: "S001c", patientId: "P001", symptom: "Náuseas", category: "gastrointestinal", severity: 4, date: "2024-01-05" },
+  { id: "S001d", patientId: "P001", symptom: "Náuseas", category: "gastrointestinal", severity: 5, date: "2024-01-01" },
+  { id: "S002", patientId: "P001", symptom: "Fatiga", category: "metabolico", severity: 3, date: "2024-01-12" },
+  { id: "S002b", patientId: "P001", symptom: "Fatiga", category: "metabolico", severity: 4, date: "2024-01-08" },
+  { id: "S002c", patientId: "P001", symptom: "Fatiga", category: "metabolico", severity: 3, date: "2024-01-03" },
+  { id: "S017", patientId: "P001", symptom: "Dolor de cabeza", category: "neurologico", severity: 2, date: "2024-01-11" },
+  { id: "S017b", patientId: "P001", symptom: "Dolor de cabeza", category: "neurologico", severity: 3, date: "2024-01-06" },
+  
+  // Patient P002 - More diverse symptoms
+  { id: "S003", patientId: "P002", symptom: "Mareos", category: "neurologico", severity: 4, date: "2024-01-13" },
+  { id: "S003b", patientId: "P002", symptom: "Mareos", category: "neurologico", severity: 5, date: "2024-01-08" },
+  { id: "S003c", patientId: "P002", symptom: "Mareos", category: "neurologico", severity: 4, date: "2024-01-03" },
+  { id: "S004", patientId: "P002", symptom: "Dolor de cabeza", category: "neurologico", severity: 3, date: "2024-01-11" },
+  { id: "S004b", patientId: "P002", symptom: "Dolor de cabeza", category: "neurologico", severity: 4, date: "2024-01-07" },
+  { id: "S005", patientId: "P002", symptom: "Estreñimiento", category: "gastrointestinal", severity: 4, date: "2024-01-10" },
+  { id: "S005b", patientId: "P002", symptom: "Estreñimiento", category: "gastrointestinal", severity: 3, date: "2024-01-04" },
+  { id: "S006", patientId: "P002", symptom: "Insomnio", category: "psicologico", severity: 6, date: "2024-01-09" },
+  { id: "S006b", patientId: "P002", symptom: "Insomnio", category: "psicologico", severity: 5, date: "2024-01-05" },
+  { id: "S006c", patientId: "P002", symptom: "Insomnio", category: "psicologico", severity: 4, date: "2024-01-01" },
+  { id: "S018", patientId: "P002", symptom: "Ansiedad", category: "psicologico", severity: 3, date: "2024-01-12" },
+  { id: "S019", patientId: "P002", symptom: "Dolor muscular", category: "musculoesqueletico", severity: 2, date: "2024-01-10" },
+  
+  // Patient P004
+  { id: "S007", patientId: "P004", symptom: "Náuseas", category: "gastrointestinal", severity: 4, date: "2024-01-14" },
+  { id: "S007b", patientId: "P004", symptom: "Náuseas", category: "gastrointestinal", severity: 5, date: "2024-01-10" },
+  { id: "S007c", patientId: "P004", symptom: "Náuseas", category: "gastrointestinal", severity: 6, date: "2024-01-05" },
+  { id: "S008", patientId: "P004", symptom: "Fatiga", category: "metabolico", severity: 4, date: "2024-01-13" },
+  { id: "S008b", patientId: "P004", symptom: "Fatiga", category: "metabolico", severity: 3, date: "2024-01-09" },
+  { id: "S009", patientId: "P004", symptom: "Diarrea", category: "gastrointestinal", severity: 3, date: "2024-01-11" },
+  { id: "S009b", patientId: "P004", symptom: "Diarrea", category: "gastrointestinal", severity: 4, date: "2024-01-07" },
+  { id: "S020", patientId: "P004", symptom: "Palpitaciones", category: "cardiovascular", severity: 2, date: "2024-01-12" },
+  
+  // Patient P005 - Severe symptoms
+  { id: "S010", patientId: "P005", symptom: "Náuseas", category: "gastrointestinal", severity: 7, date: "2024-01-05" },
+  { id: "S010b", patientId: "P005", symptom: "Náuseas", category: "gastrointestinal", severity: 6, date: "2024-01-02" },
+  { id: "S011", patientId: "P005", symptom: "Vómitos", category: "gastrointestinal", severity: 6, date: "2024-01-04" },
+  { id: "S011b", patientId: "P005", symptom: "Vómitos", category: "gastrointestinal", severity: 7, date: "2024-01-01" },
+  { id: "S012", patientId: "P005", symptom: "Fatiga", category: "metabolico", severity: 6, date: "2024-01-03" },
+  { id: "S012b", patientId: "P005", symptom: "Fatiga", category: "metabolico", severity: 5, date: "2023-12-28" },
+  { id: "S013", patientId: "P005", symptom: "Dolor abdominal", category: "gastrointestinal", severity: 5, date: "2024-01-02" },
+  { id: "S013b", patientId: "P005", symptom: "Dolor abdominal", category: "gastrointestinal", severity: 4, date: "2023-12-30" },
+  { id: "S014", patientId: "P005", symptom: "Mareos", category: "neurologico", severity: 4, date: "2024-01-01" },
+  { id: "S014b", patientId: "P005", symptom: "Mareos", category: "neurologico", severity: 5, date: "2023-12-27" },
+  { id: "S021", patientId: "P005", symptom: "Depresión", category: "psicologico", severity: 5, date: "2024-01-03" },
+  
+  // Patient P006 - Mild symptoms
+  { id: "S015", patientId: "P006", symptom: "Fatiga", category: "metabolico", severity: 1, date: "2024-01-10" },
+  { id: "S015b", patientId: "P006", symptom: "Fatiga", category: "metabolico", severity: 2, date: "2024-01-05" },
+  { id: "S016", patientId: "P006", symptom: "Náuseas", category: "gastrointestinal", severity: 1, date: "2024-01-08" },
 ]
 
 export const getPatientSymptoms = (patientId: string) => 
@@ -926,6 +1069,14 @@ export const getRelationshipLabel = (rel: Caregiver["relationship"]): string => 
   return labels[rel]
 }
 
+// Clinical Note (Nota Clínica)
+export interface ClinicalNote {
+  id: string
+  author: string
+  date: string
+  content: string
+}
+
 // Clinical Record (Ficha Clínica)
 export interface ClinicalRecord {
   id: string
@@ -935,7 +1086,7 @@ export interface ClinicalRecord {
   comorbidities: string[]
   allergies: string[]
   bloodType: string
-  notes: string
+  notes: ClinicalNote[]
   externalSystemId?: string
   importedAt?: string
   lastUpdated: string
@@ -948,10 +1099,29 @@ export const clinicalRecords: ClinicalRecord[] = [
     patientId: "P001",
     recordDate: "2023-10-15",
     diagnosis: "Obesidad grado I (IMC 30-34.9)",
-    comorbidities: ["Hipertensión arterial", "Prediabetes"],
+    comorbidities: ["Prediabetes"],
     allergies: ["Penicilina"],
     bloodType: "O+",
-    notes: "Paciente con antecedentes familiares de diabetes tipo 2. Inicia tratamiento farmacológico con seguimiento quincenal.",
+    notes: [
+      {
+        id: "N001",
+        author: "Dr. Juan Pérez",
+        date: "2024-01-15",
+        content: "Control de seguimiento. Paciente refiere buena tolerancia al tratamiento con Semaglutida 0.5mg semanal. HbA1c descendió de 6.2% a 5.8%, saliendo del rango prediabético. Peso actual 92kg (-13kg desde inicio). Continuar dosis actual y mantener plan nutricional hipocalórico."
+      },
+      {
+        id: "N002",
+        author: "Dr. Juan Pérez",
+        date: "2023-12-18",
+        content: "Paciente reporta náuseas leves los primeros 2 días post-inyección que ceden espontáneamente. Glicemia en ayunas 102 mg/dL. Se observa mejoría en patrón alimentario con reducción de ingesta compulsiva. Peso 95kg. Solicito panel metabólico de control."
+      },
+      {
+        id: "N003",
+        author: "Dr. Juan Pérez",
+        date: "2023-10-15",
+        content: "Primera consulta. Mujer de 45 años con obesidad grado I (IMC 33.8) y prediabetes (HbA1c 6.2%). Antecedentes familiares de DM2 (madre y hermano). Se inicia tratamiento con Semaglutida 0.25mg semanal con titulación progresiva. Se deriva a nutrición para plan alimentario personalizado."
+      }
+    ],
     externalSystemId: "EXT-2023-45678",
     importedAt: "2023-10-15T10:30:00",
     lastUpdated: "2024-01-15",
@@ -965,7 +1135,14 @@ export const clinicalRecords: ClinicalRecord[] = [
     comorbidities: ["Diabetes tipo 2", "Apnea del sueño", "Artrosis de rodilla"],
     allergies: [],
     bloodType: "A+",
-    notes: "Paciente con múltiples comorbilidades. Requiere monitoreo frecuente de glucosa. Considerar cirugía bariátrica si no hay respuesta al tratamiento en 6 meses.",
+    notes: [
+      {
+        id: "N004",
+        author: "Dr. Juan Pérez",
+        date: "2024-01-10",
+        content: "Paciente con múltiples comorbilidades. Requiere monitoreo frecuente de glucosa. Considerar cirugía bariátrica si no hay respuesta al tratamiento en 6 meses."
+      }
+    ],
     externalSystemId: "EXT-2023-56789",
     importedAt: "2023-11-01T14:15:00",
     lastUpdated: "2024-01-10",
@@ -979,7 +1156,14 @@ export const clinicalRecords: ClinicalRecord[] = [
     comorbidities: [],
     allergies: ["Sulfas"],
     bloodType: "B+",
-    notes: "Excelente respuesta al tratamiento. Paciente muy motivada y comprometida con cambios de estilo de vida.",
+    notes: [
+      {
+        id: "N005",
+        author: "Dr. Juan Pérez",
+        date: "2024-01-15",
+        content: "Excelente respuesta al tratamiento. Paciente muy motivada y comprometida con cambios de estilo de vida."
+      }
+    ],
     externalSystemId: "EXT-2023-34567",
     importedAt: "2023-09-20T09:00:00",
     lastUpdated: "2024-01-15",
@@ -993,7 +1177,14 @@ export const clinicalRecords: ClinicalRecord[] = [
     comorbidities: ["Hipertensión arterial", "Hipotiroidismo"],
     allergies: ["Ibuprofeno"],
     bloodType: "AB+",
-    notes: "Paciente de edad avanzada, requiere ajustes de dosis más conservadores. Monitorear función tiroidea.",
+    notes: [
+      {
+        id: "N006",
+        author: "Dr. Juan Pérez",
+        date: "2024-01-14",
+        content: "Paciente de edad avanzada, requiere ajustes de dosis más conservadores. Monitorear función tiroidea."
+      }
+    ],
     lastUpdated: "2024-01-14",
     physician: "Dr. Juan Pérez"
   },
@@ -1005,7 +1196,14 @@ export const clinicalRecords: ClinicalRecord[] = [
     comorbidities: ["Ansiedad", "Depresión leve"],
     allergies: [],
     bloodType: "O-",
-    notes: "Paciente con componente emocional importante. Derivada a psicología para manejo conjunto. Alta incidencia de efectos secundarios.",
+    notes: [
+      {
+        id: "N007",
+        author: "Dr. Juan Pérez",
+        date: "2024-01-05",
+        content: "Paciente con componente emocional importante. Derivada a psicología para manejo conjunto. Alta incidencia de efectos secundarios."
+      }
+    ],
     lastUpdated: "2024-01-05",
     physician: "Dr. Juan Pérez"
   },
@@ -1017,7 +1215,14 @@ export const clinicalRecords: ClinicalRecord[] = [
     comorbidities: ["Dislipidemia"],
     allergies: [],
     bloodType: "A-",
-    notes: "Buena evolución. Lípidos mejorando con la pérdida de peso. Continuar con plan actual.",
+    notes: [
+      {
+        id: "N008",
+        author: "Dr. Juan Pérez",
+        date: "2024-01-15",
+        content: "Buena evolución. Lípidos mejorando con la pérdida de peso. Continuar con plan actual."
+      }
+    ],
     externalSystemId: "EXT-2023-23456",
     importedAt: "2023-10-01T11:45:00",
     lastUpdated: "2024-01-15",

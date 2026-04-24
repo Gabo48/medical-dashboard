@@ -11,20 +11,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Calendar } from "@/components/ui/calendar"
-import { AlertBadge, MoodBadge, EstadoEmocionalBadge, EstadoEmocionalInfoModal } from "./alert-badge"
+import { AlertBadge, MoodBadge, EstadoEmocionalBadge, EstadoEmocionalInfoModal, RiesgoAbandonoInfoModal } from "./alert-badge"
 import { WeightChart } from "./weight-chart"
 import { AdherenceChart } from "./adherence-chart"
 import { MoodChart } from "./mood-chart"
 import { DailyAdherenceChart } from "./daily-adherence-chart"
 import { WeeklyAdherenceChart } from "./weekly-adherence-chart"
 import { AdherenceChartsContainer } from "./adherence-charts-container"
-import { SideEffectsChart } from "./side-effects-chart"
 import { SymptomsList } from "./symptoms-list"
 import { InteractionsTable } from "./interactions-table"
 import { IntentsByType } from "./intents-by-type"
 import { ClinicalRecordCard } from "./clinical-record-card"
 import { MessagingPanel } from "./messaging-panel"
+import { ClinicalMetricsSection } from "./clinical-metrics-section"
+import { ClinicalProfileTab } from "./clinical-profile-tab"
 import type { Patient } from "@/lib/mock-data"
+import { getPatientClinicalMetrics } from "@/lib/clinical-metrics-data"
 import { 
   getWeightHistory, 
   getAdherenceHistory, 
@@ -32,21 +34,21 @@ import {
   getPatientSymptoms,
   getDailyAdherenceHistory,
   getWeeklyAdherenceHistory,
-  getSideEffectsReport,
   getPatientInteractions,
   getPatientIntents,
   getMedicalEventFrequency,
   getPatientClinicalRecord,
   getPatientMessages,
   getPatientCaregivers,
-  getEstadoEmocionalLevel
+  getEstadoEmocionalLevel,
+  getRiesgoLabel,
+  getRiesgoColor,
+  getCondicionLabel,
+  getAccionRecomendada
 } from "@/lib/mock-data"
 import { 
-  Scale, 
-  Ruler, 
   Calendar as CalendarIcon, 
   MessageSquare, 
-  TrendingDown,
   Activity,
   CalendarCheck,
   CalendarX,
@@ -58,12 +60,13 @@ import {
   User,
   BarChart3,
   Info,
-  Download
+  Heart
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import type { DateRange } from "react-day-picker"
+import { cn } from "@/lib/utils"
 
 interface PatientDetailProps {
   patient: Patient
@@ -92,6 +95,7 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
     from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
     to: new Date()
   })
+  const [isRiesgoModalOpen, setIsRiesgoModalOpen] = useState(false)
 
   const weightHistory = getWeightHistory(patient.id)
   const adherenceHistory = getAdherenceHistory(patient.id)
@@ -99,13 +103,13 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
   const symptoms = getPatientSymptoms(patient.id)
   const dailyAdherence = getDailyAdherenceHistory(patient.id)
   const weeklyAdherence = getWeeklyAdherenceHistory(patient.id)
-  const sideEffects = getSideEffectsReport(patient.id)
   const interactions = getPatientInteractions(patient.id)
   const patientIntents = getPatientIntents(patient.id)
   const medicalEventFrequency = getMedicalEventFrequency(patient.id)
   const clinicalRecord = getPatientClinicalRecord(patient.id)
   const patientMessages = getPatientMessages(patient.id)
   const caregivers = getPatientCaregivers(patient.id)
+  const clinicalMetrics = getPatientClinicalMetrics(patient.id)
 
   // Calculate days without registering (simulated based on last interaction)
   const lastInteractionDate = new Date(patient.lastInteraction)
@@ -213,7 +217,7 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
               <div>
                 <h2 className="text-xl font-bold text-foreground">{patient.name}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {patient.age} anos · {patient.gender === "M" ? "Masculino" : "Femenino"} · ID: {patient.id}
+                  RUT: {patient.rut} · {patient.age} anos · {patient.gender === "M" ? "Masculino" : "Femenino"} · ID: {patient.id}
                 </p>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <Badge variant="outline" className="text-xs">
@@ -230,6 +234,77 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Risk Badge */}
+            <div className="flex-1 flex justify-center">
+              <div className="flex items-start gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex flex-col items-center gap-1 cursor-help">
+                      <span className="text-xs text-muted-foreground font-medium">Riesgo de abandono</span>
+                      <span className={cn(
+                        "inline-flex items-center justify-center px-3 py-1.5 rounded-md font-bold text-sm",
+                        getRiesgoColor(patient.riesgoAbandono.nivel)
+                      )}>
+                        Nivel {patient.riesgoAbandono.nivel}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {getRiesgoLabel(patient.riesgoAbandono.nivel)}
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[320px]">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 border-b border-border pb-2">
+                        <span className={cn(
+                          "inline-flex items-center justify-center px-2 py-0.5 rounded font-bold text-xs",
+                          getRiesgoColor(patient.riesgoAbandono.nivel)
+                        )}>
+                          Nivel {patient.riesgoAbandono.nivel}
+                        </span>
+                        <span className="font-medium text-sm">
+                          {getRiesgoLabel(patient.riesgoAbandono.nivel)}
+                        </span>
+                      </div>
+                      
+                      {patient.riesgoAbandono.condicionesActivas.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Condiciones activas:</p>
+                          <ul className="text-xs space-y-0.5">
+                            {patient.riesgoAbandono.condicionesActivas.map((condicion, idx) => (
+                              <li key={idx} className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-destructive flex-shrink-0" />
+                                {getCondicionLabel(condicion)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {patient.riesgoAbandono.condicionesActivas.length === 0 && (
+                        <p className="text-xs text-muted-foreground">Sin condiciones de riesgo activas</p>
+                      )}
+                      
+                      <div className="pt-1 border-t border-border">
+                        <p className="text-xs font-medium text-muted-foreground mb-0.5">Accion recomendada:</p>
+                        <p className="text-xs">{getAccionRecomendada(patient.riesgoAbandono.nivel)}</p>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+                <button
+                  onClick={() => setIsRiesgoModalOpen(true)}
+                  className="mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full hover:bg-muted transition-colors"
+                  title="Ver criterios de riesgo"
+                >
+                  <Info className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </button>
+              </div>
+              <RiesgoAbandonoInfoModal 
+                isOpen={isRiesgoModalOpen} 
+                onOpenChange={setIsRiesgoModalOpen} 
+              />
             </div>
             
             {/* Date Range Selector */}
@@ -327,6 +402,10 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             <User className="h-4 w-4" />
             Informacion
           </TabsTrigger>
+          <TabsTrigger value="clinical-profile" className="gap-2">
+            <Heart className="h-4 w-4" />
+            Perfil Clinico
+          </TabsTrigger>
           <TabsTrigger value="stats" className="gap-2">
             <BarChart3 className="h-4 w-4" />
             Estadisticas
@@ -339,55 +418,20 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
         {/* Information Tab */}
         <TabsContent value="info" className="space-y-4 mt-4">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <Scale className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Peso actual</p>
-                    <p className="text-lg font-bold text-foreground">{patient.weight} kg</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-chart-3" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">IMC actual</p>
-                    <p className="text-lg font-bold text-foreground">{patient.bmi.toFixed(1)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="h-4 w-4 text-success" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Cambio IMC</p>
-                    <p className="text-lg font-bold text-success">{patient.bmiChange}%</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <Ruler className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Estatura</p>
-                    <p className="text-lg font-bold text-foreground">{patient.height} m</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Clinical Metrics Section - replaces Quick Stats with extended metrics */}
+          <ClinicalMetricsSection metrics={clinicalMetrics} patient={patient} />
+
+          {/* Clinical Record - Now wider, taking 2 columns */}
+          <div className="grid grid-cols-1 gap-4">
+            <ClinicalRecordCard 
+              record={clinicalRecord} 
+              patient={patient}
+              onImport={(externalId) => console.log("[v0] Import clinical record:", externalId)}
+              onRefresh={() => console.log("[v0] Refresh clinical record")}
+            />
           </div>
 
-          {/* Risk Alerts & Factors */}
+          {/* Risk Factors and Medication Plan */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="bg-card border-border">
               <CardHeader className="pb-2">
@@ -456,6 +500,14 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
                 </div>
               </CardContent>
             </Card>
+            <MedicationPlanCard 
+              plan={medicationPlan}
+              patientId={patient.id}
+              onUpdateMedication={(medId, updates) => console.log("Update medication:", medId, updates)}
+              onAddMedication={(med) => console.log("Add medication:", med)}
+              onDeleteMedication={(medId) => console.log("Delete medication:", medId)}
+              onUpdateNotes={(notes) => console.log("Update notes:", notes)}
+            />
           </div>
 
           {/* Emotional State */}
@@ -508,18 +560,13 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             </CardContent>
           </Card>
 
-          {/* Clinical Record (Full Redesigned) */}
-          <ClinicalRecordCard 
-            record={clinicalRecord} 
-            patient={patient}
-            onImport={(externalId) => console.log("[v0] Import clinical record:", externalId)}
-            onRefresh={() => console.log("[v0] Refresh clinical record")}
-          />
-
-
-
           {/* Symptoms Table */}
           <SymptomsList symptoms={symptoms} />
+        </TabsContent>
+
+        {/* Clinical Profile Tab */}
+        <TabsContent value="clinical-profile" className="space-y-4 mt-4">
+          <ClinicalProfileTab metrics={clinicalMetrics} />
         </TabsContent>
 
         {/* Statistics Tab */}
@@ -643,15 +690,9 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
             adherenceHistoryData={adherenceHistory}
           />
 
-          {/* Side Effects Chart */}
-          <SideEffectsChart data={sideEffects} />
-
           {/* Weight & Mood Charts */}
           <WeightChart data={weightHistory} />
           <MoodChart data={moodHistory} />
-
-          {/* Intents by Type */}
-          <IntentsByType data={patientIntents} totalMessages={patient.messagesCount} />
         </TabsContent>
 
         {/* Communication Tab */}
@@ -666,6 +707,9 @@ export function PatientDetail({ patient, onClose }: PatientDetailProps) {
 
           {/* Interactions History */}
           <InteractionsTable interactions={interactions} />
+
+          {/* Intents by Type */}
+          <IntentsByType data={patientIntents} totalMessages={patient.messagesCount} />
         </TabsContent>
       </Tabs>
     </div>
