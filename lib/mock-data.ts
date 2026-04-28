@@ -262,6 +262,7 @@ export const patients: Patient[] = [
   {
     id: "P006",
     name: "Miguel Torres",
+    rut: "99887766-3",
     age: 48,
     gender: "M",
     weight: 95,

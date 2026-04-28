@@ -161,6 +161,250 @@ export function EstadoEmocionalInfoModal() {
   )
 }
 
+// Motivation (Readiness Ruler) data for the modal
+const motivationLevelData = [
+  {
+    puntaje: 1,
+    etiqueta: "No estoy nada preparado para cambiar",
+    implicancia: "Riesgo muy alto de abandono (pre-contemplación)",
+    accion: "Activar alerta. Preguntar por barreras. Escalar si es necesario."
+  },
+  {
+    puntaje: 2,
+    etiqueta: "Estoy pensando en cambiar, pero no ahora",
+    implicancia: "En pre-contemplación / contemplación temprana",
+    accion: "Explorar ambivalencia. Técnicas de entrevista motivacional."
+  },
+  {
+    puntaje: 3,
+    etiqueta: "Quiero cambiar, pero no sé cómo",
+    implicancia: "En contemplación / preparación",
+    accion: "Educar, ofrecer estrategias concretas y orientación."
+  },
+  {
+    puntaje: 4,
+    etiqueta: "Me estoy preparando para cambiar",
+    implicancia: "En preparación / acción temprana",
+    accion: "Reforzar positivamente. Ayudar a planificar próximos pasos."
+  },
+  {
+    puntaje: 5,
+    etiqueta: "Ya estoy tomando medidas activamente",
+    implicancia: "En acción / mantenimiento",
+    accion: "Refuerzo positivo. Reducir frecuencia de contacto gradualmente."
+  }
+]
+
+const getMotivationColor = (puntaje: number) => {
+  switch (puntaje) {
+    case 1:
+      return {
+        colorClass: "bg-destructive",
+        bgClass: "bg-destructive/10 border-destructive/20",
+        textClass: "text-destructive"
+      }
+    case 2:
+      return {
+        colorClass: "bg-orange-500",
+        bgClass: "bg-orange-500/10 border-orange-500/20",
+        textClass: "text-orange-500"
+      }
+    case 3:
+      return {
+        colorClass: "bg-warning",
+        bgClass: "bg-warning/10 border-warning/20",
+        textClass: "text-warning"
+      }
+    case 4:
+      return {
+        colorClass: "bg-lime-500",
+        bgClass: "bg-lime-500/10 border-lime-500/20",
+        textClass: "text-lime-500"
+      }
+    case 5:
+      return {
+        colorClass: "bg-success",
+        bgClass: "bg-success/10 border-success/20",
+        textClass: "text-success"
+      }
+    default:
+      return {
+        colorClass: "bg-muted",
+        bgClass: "bg-muted/10 border-muted/20",
+        textClass: "text-muted-foreground"
+      }
+  }
+}
+
+export function MotivacionInfoModal() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setIsOpen(true)
+        }}
+        className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full hover:bg-muted transition-colors"
+        title="Explicación de Motivación (Readiness Ruler)"
+      >
+        <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+      </button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Escala de Disposición al Cambio (Readiness Ruler)</DialogTitle>
+            <p className="text-sm text-muted-foreground">Referencia clínica — escala 1 a 5</p>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            {motivationLevelData.map((level) => {
+              const colors = getMotivationColor(level.puntaje)
+              return (
+                <div 
+                  key={level.puntaje}
+                  className={cn(
+                    "flex rounded-lg border overflow-hidden",
+                    colors.bgClass
+                  )}
+                >
+                  {/* Color stripe */}
+                  <div className={cn("w-2 flex-shrink-0", colors.colorClass)} />
+                  
+                  <div className="flex-1 p-4 space-y-2">
+                    {/* Header with score and label */}
+                    <div className="flex items-start gap-2">
+                      <span className={cn("text-lg font-bold", colors.textClass)}>
+                        {level.puntaje}
+                      </span>
+                      <span className="text-base font-semibold">— {level.etiqueta}</span>
+                    </div>
+
+                    {/* Clinical implication */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-muted-foreground">Implicancia clínica:</span>
+                      <span className="text-sm">{level.implicancia}</span>
+                    </div>
+
+                    {/* Recommended action - highlighted */}
+                    <div className={cn(
+                      "p-3 rounded-md border-l-4",
+                      colors.colorClass,
+                      "bg-background/60"
+                    )}>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Acción de Sarah:</p>
+                      <p className="text-sm font-semibold">{level.accion}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+// Combination Matrix data
+const matrizCombinacionData = [
+  {
+    situacion: "Deprimido pero quiere cambiar",
+    estadoEmocional: "Alto (≥ 7)",
+    readinessRuler: "Alto (4–5)",
+    interpretacion: "La depresión es barrera tratable; la motivación está presente. Tratar malestar primero; reforzar motivación.",
+    bgColor: "bg-teal-50 dark:bg-teal-950/30",
+    borderColor: "border-teal-200 dark:border-teal-800"
+  },
+  {
+    situacion: "Sin malestar pero no quiere cambiar",
+    estadoEmocional: "Bajo (0–2)",
+    readinessRuler: "Bajo (1–2)",
+    interpretacion: "Sin depresión pero sin motivación. Sarah activa entrevista motivacional y explora ambivalencia.",
+    bgColor: "bg-orange-50 dark:bg-orange-950/30",
+    borderColor: "border-orange-200 dark:border-orange-800"
+  },
+  {
+    situacion: "Deprimido y sin motivación",
+    estadoEmocional: "Alto (≥ 7)",
+    readinessRuler: "Bajo (1–2)",
+    interpretacion: "Riesgo muy alto de abandono. Sarah escala a psicólogo/psiquiatra de forma urgente.",
+    alertaRoja: true,
+    bgColor: "bg-red-50 dark:bg-red-950/30",
+    borderColor: "border-red-200 dark:border-red-800"
+  },
+  {
+    situacion: "Sin malestar y con alta motivación",
+    estadoEmocional: "Bajo (0–2)",
+    readinessRuler: "Alto (4–5)",
+    interpretacion: "Bajo riesgo. Sarah mantiene seguimiento normal y aplica refuerzo positivo.",
+    bgColor: "bg-green-50 dark:bg-green-950/30",
+    borderColor: "border-green-200 dark:border-green-800"
+  }
+]
+
+export function MatrizCombinacionModal() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setIsOpen(true)
+        }}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+        Ver Matriz de Combinación
+      </button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Matriz de combinación de resultados</DialogTitle>
+            <p className="text-sm text-muted-foreground">Interpretación clínica combinando Estado Emocional (GHQ-12) y Readiness Ruler</p>
+          </DialogHeader>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="px-4 py-3 text-left font-semibold border border-border">Situación del paciente</th>
+                  <th className="px-4 py-3 text-center font-semibold border border-border">Estado Emocional</th>
+                  <th className="px-4 py-3 text-center font-semibold border border-border">Readiness Ruler</th>
+                  <th className="px-4 py-3 text-left font-semibold border border-border">Interpretación + Acción de Sarah</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matrizCombinacionData.map((row, index) => (
+                  <tr key={index} className={cn(row.bgColor, row.borderColor)}>
+                    <td className="px-4 py-3 border border-border font-bold">
+                      {row.situacion}
+                    </td>
+                    <td className="px-4 py-3 text-center border border-border font-mono">
+                      {row.estadoEmocional}
+                    </td>
+                    <td className="px-4 py-3 text-center border border-border font-mono">
+                      {row.readinessRuler}
+                    </td>
+                    <td className="px-4 py-3 border border-border">
+                      {row.interpretacion}
+                      {row.alertaRoja && (
+                        <span className="ml-1 font-bold text-destructive">Alerta ROJA.</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
 // Risk level configurations for the modal
 const riskLevelData = [
   {
