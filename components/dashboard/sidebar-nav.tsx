@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/components/theme-provider"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import {
   Select,
   SelectContent,
@@ -42,11 +43,20 @@ const navItems = [
 export function SidebarNav({ activeSection, onSectionChange, treatmentType, onTreatmentChange }: SidebarNavProps) {
   const { theme, toggleTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
 
   // Avoid hydration mismatch by only rendering theme-dependent UI after mount
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handleLogout = () => {
+    // Clear all auth tokens
+    localStorage.removeItem("doctor_token")
+    localStorage.removeItem("admin_token")
+    // Redirect to login
+    router.push("/login")
+  }
 
   const currentTreatmentLabel = treatmentOptions.find(t => t.value === treatmentType)?.label || "Obesidad"
 
@@ -131,6 +141,7 @@ export function SidebarNav({ activeSection, onSectionChange, treatmentType, onTr
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />
           Cerrar sesion

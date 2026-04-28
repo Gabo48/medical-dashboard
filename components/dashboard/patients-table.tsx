@@ -295,7 +295,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
 
   return (
     <TooltipProvider>
-    <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+    <div className="rounded-xl border border-border bg-card shadow-sm flex flex-col w-full">
       {/* Estado Emocional Legend */}
       <div className="px-4 py-2 bg-muted/20 border-b border-border flex items-center justify-between gap-4 flex-wrap text-xs">
         <div className="flex items-center gap-4 flex-wrap">
@@ -311,7 +311,8 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
         </div>
         <MatrizCombinacionModal />
       </div>
-      <Table>
+      <div className="overflow-x-auto w-full">
+      <Table className="min-w-[1200px] w-full">
         <TableHeader>
           <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border">
             <SortableHeader 
@@ -647,6 +648,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
     </TooltipProvider>
   )
