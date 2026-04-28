@@ -115,7 +115,10 @@ export function EstadoEmocionalInfoModal() {
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation()
+          setIsOpen(true)
+        }}
         className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full hover:bg-muted transition-colors"
         title="Explicación de Estado Emocional"
       >
