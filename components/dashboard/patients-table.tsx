@@ -20,7 +20,7 @@ import type { Patient } from "@/lib/mock-data"
 import { getPatientSymptoms, getEstadoEmocionalLevel, getRiesgoLabel, getRiesgoColor, getCondicionLabel, getAccionRecomendada } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 import { ArrowUpDown, ArrowUp, ArrowDown, HelpCircle, CalendarCheck, Stethoscope } from "lucide-react"
-import { EstadoEmocionalInfoModal, MotivacionInfoModal, getEstadoEmocionalColorClass } from "./alert-badge"
+import { EstadoEmocionalInfoModal, MotivacionInfoModal, MatrizCombinacionModal, getEstadoEmocionalColorClass } from "./alert-badge"
 
 interface PatientsTableProps {
   patients: Patient[]
@@ -297,16 +297,19 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
     <TooltipProvider>
     <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
       {/* Estado Emocional Legend */}
-      <div className="px-4 py-2 bg-muted/20 border-b border-border flex items-center gap-4 flex-wrap text-xs">
-        <span className="text-muted-foreground font-medium">Estado Emocional:</span>
-        {Object.entries(estadoEmocionalLegend).map(([key, value]) => (
-          <span key={key} className="flex items-center gap-1">
-            <span className={cn("w-5 h-5 rounded flex items-center justify-center font-mono font-bold text-xs", value.color)}>
-              ●
+      <div className="px-4 py-2 bg-muted/20 border-b border-border flex items-center justify-between gap-4 flex-wrap text-xs">
+        <div className="flex items-center gap-4 flex-wrap">
+          <span className="text-muted-foreground font-medium">Estado Emocional:</span>
+          {Object.entries(estadoEmocionalLegend).map(([key, value]) => (
+            <span key={key} className="flex items-center gap-1">
+              <span className={cn("w-5 h-5 rounded flex items-center justify-center font-mono font-bold text-xs", value.color)}>
+                ●
+              </span>
+              <span className="text-muted-foreground">{value.label}</span>
             </span>
-            <span className="text-muted-foreground">{value.label}</span>
-          </span>
-        ))}
+          ))}
+        </div>
+        <MatrizCombinacionModal />
       </div>
       <Table>
         <TableHeader>
