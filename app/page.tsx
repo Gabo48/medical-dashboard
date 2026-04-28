@@ -35,6 +35,9 @@ function PatientsSection({
   const [searchQuery, setSearchQuery] = useState("")
 
   const filteredPatients = useMemo(() => {
+    console.log("[v0] PatientsSection - searchQuery:", searchQuery)
+    console.log("[v0] PatientsSection - patientsList length:", patientsList?.length)
+    console.log("[v0] PatientsSection - patientsList:", patientsList)
     if (!searchQuery.trim()) return patientsList
     const query = searchQuery.toLowerCase().trim()
     return patientsList.filter(p => 
@@ -127,8 +130,12 @@ function DashboardContent() {
 
   // Filter patients by treatment type
   const filteredPatients = useMemo(() => {
+    console.log("[v0] DashboardContent - treatmentType:", treatmentType)
+    console.log("[v0] DashboardContent - total patients:", patients?.length)
     if (treatmentType === "all") return patients
-    return patients.filter(p => p.treatmentType === treatmentType)
+    const filtered = patients.filter(p => p.treatmentType === treatmentType)
+    console.log("[v0] DashboardContent - filtered patients:", filtered?.length)
+    return filtered
   }, [treatmentType])
 
   const renderContent = () => {
