@@ -12,6 +12,7 @@ import {
   Legend
 } from "recharts"
 import type { SideEffectReport } from "@/lib/mock-data"
+import { getSeverityColorVarFromString } from "@/lib/severity-utils"
 import { AlertCircle, Pill } from "lucide-react"
 
 interface SideEffectsChartProps {
@@ -20,11 +21,6 @@ interface SideEffectsChartProps {
 }
 
 export function SideEffectsChart({ data, title = "Efectos Secundarios Reportados" }: SideEffectsChartProps) {
-  const getSeverityColor = (severity: string) => {
-    if (severity === "mild") return "var(--success)"
-    if (severity === "moderate") return "var(--warning)"
-    return "var(--destructive)"
-  }
 
   if (data.length === 0) {
     return (
@@ -99,7 +95,7 @@ export function SideEffectsChart({ data, title = "Efectos Secundarios Reportados
               />
               <Bar dataKey="count" name="Reportes" radius={[0, 4, 4, 0]}>
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getSeverityColor(entry.severity)} />
+                  <Cell key={`cell-${index}`} fill={getSeverityColorVarFromString(entry.severity)} />
                 ))}
               </Bar>
             </BarChart>
