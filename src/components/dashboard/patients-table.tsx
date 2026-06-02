@@ -18,6 +18,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import type { Patient } from "@/lib/mock-data"
 import { getPatientSymptoms, getEstadoEmocionalLevel, getRiesgoLabel, getRiesgoColor, getCondicionLabel, getAccionRecomendada } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
+import { getMotivationLabel, getMotivationDescription, getMotivationColorClass } from "@/lib/motivation-utils"
+import { getSeverityBadgeColor } from "@/lib/severity-utils"
+import { ADHERENCE_THRESHOLDS } from "@/lib/thresholds"
 import { ArrowUpDown, ArrowUp, ArrowDown, HelpCircle, CalendarCheck, Stethoscope } from "lucide-react"
 import { EstadoEmocionalInfoModal, MotivacionInfoModal, MatrizCombinacionModal, getEstadoEmocionalColorClass } from "./alert-badge"
 
@@ -49,46 +52,12 @@ const columnDefinitions: Record<string, string> = {
   riesgoAbandono: "Nivel de riesgo de abandono del tratamiento basado en multiples factores"
 }
 
-// Motivation descriptions based on value
-const getMotivationLabel = (value: number): string => {
-  switch (value) {
-    case 1:
-      return "No preparado"
-    case 2:
-      return "Pensando"
-    case 3:
-      return "Quiere cambiar"
-    case 4:
-      return "Preparandose"
-    case 5:
-      return "Activo"
-    default:
-      return ""
-  }
-}
-
-const getMotivationDescription = (value: number): string => {
-  switch (value) {
-    case 1:
-      return "El paciente no esta nada preparado para cambiar."
-    case 2:
-      return "El paciente esta pensando en cambiar, pero no ahora."
-    case 3:
-      return "El paciente quiere cambiar, pero no sabe como."
-    case 4:
-      return "El paciente se esta preparando para cambiar."
-    case 5:
-      return "El paciente esta tomando medidas activamente."
-    default:
-      return ""
-  }
-}
 type SortDirection = "asc" | "desc" | null
 
 function AdherenceBar({ value }: { value: number }) {
   const getColor = (val: number) => {
-    if (val >= 80) return "bg-success"
-    if (val >= 60) return "bg-warning"
+    if (val >= ADHERENCE_THRESHOLDS.HIGH) return "bg-success"
+    if (val >= ADHERENCE_THRESHOLDS.MEDIUM) return "bg-warning"
     return "bg-destructive"
   }
 
@@ -102,7 +71,7 @@ function AdherenceBar({ value }: { value: number }) {
       </div>
       <span className={cn(
         "text-xs font-medium w-9 text-right",
-        value >= 80 ? "text-success" : value >= 60 ? "text-warning" : "text-destructive"
+        value >= ADHERENCE_THRESHOLDS.HIGH ? "text-success" : value >= ADHERENCE_THRESHOLDS.MEDIUM ? "text-warning" : "text-destructive"
       )}>
         {value}%
       </span>
@@ -120,8 +89,8 @@ function AdherenceStackedBars({
   persistencia: number
 }) {
   const getColor = (val: number) => {
-    if (val >= 75) return "bg-success"
-    if (val >= 50) return "bg-warning"
+    if (val >= ADHERENCE_THRESHOLDS.GOOD) return "bg-success"
+    if (val >= ADHERENCE_THRESHOLDS.MODERATE) return "bg-warning"
     return "bg-destructive"
   }
 
@@ -134,7 +103,7 @@ function AdherenceStackedBars({
             style={{ width: `${farmacologica}%` }}
           />
         </div>
-        <span className="text-xs font-medium w-20">Farmacológica → {farmacologica}%</span>
+        <span className="text-xs font-medium w-20">Farmacologica {'->'} {farmacologica}%</span>
       </div>
       <div className="flex items-center gap-2">
         <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
@@ -143,7 +112,7 @@ function AdherenceStackedBars({
             style={{ width: `${cuidado}%` }}
           />
         </div>
-        <span className="text-xs font-medium w-20">Cuidado → {cuidado}%</span>
+        <span className="text-xs font-medium w-20">Cuidado {'->'} {cuidado}%</span>
       </div>
       <div className="flex items-center gap-2">
         <div className="h-2 w-16 rounded-full bg-muted overflow-hidden">
@@ -152,7 +121,7 @@ function AdherenceStackedBars({
             style={{ width: `${persistencia}%` }}
           />
         </div>
-        <span className="text-xs font-medium w-20">Persistencia → {persistencia}%</span>
+        <span className="text-xs font-medium w-20">Persistencia {'->'} {persistencia}%</span>
       </div>
     </div>
   )
@@ -463,9 +432,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                     <div className="flex flex-col items-center gap-0.5 cursor-help">
                       <span className={cn(
                         "inline-flex items-center justify-center w-7 h-7 rounded font-mono font-bold text-sm",
-                        patient.motivation >= 4 ? "bg-success/20 text-success" :
-                        patient.motivation >= 3 ? "bg-warning/20 text-warning" :
-                        "bg-destructive/20 text-destructive"
+                        getMotivationColorClass(patient.motivation)
                       )}>
                         {patient.motivation}
                       </span>
@@ -484,8 +451,8 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                   <TooltipTrigger asChild>
                     <span className={cn(
                       "font-mono text-sm font-medium cursor-help",
-                      patient.appointmentRate >= 80 ? "text-success" : 
-                      patient.appointmentRate >= 60 ? "text-warning" : "text-destructive"
+                      patient.appointmentRate >= ADHERENCE_THRESHOLDS.HIGH ? "text-success" : 
+                      patient.appointmentRate >= ADHERENCE_THRESHOLDS.MEDIUM ? "text-warning" : "text-destructive"
                     )}>
                       {patient.appointmentRate}%
                     </span>
@@ -517,21 +484,12 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                     ? Math.max(...uniqueSymptoms.map(s => s.severity)) 
                     : 0
                   
-                  // Color based on max severity: 0-2 green, 3-4 yellow, 5 orange, 6-7 red
-                  const getBadgeColor = (severity: number) => {
-                    if (severity === 0) return "bg-success/20 text-success"
-                    if (severity <= 2) return "bg-success/20 text-success"
-                    if (severity <= 4) return "bg-warning/20 text-warning"
-                    if (severity === 5) return "bg-orange-500/20 text-orange-600 dark:text-orange-400"
-                    return "bg-destructive/20 text-destructive"
-                  }
-                  
                   // Severity label for tooltip
                   const getSeverityLabel = (severity: number) => {
                     if (severity <= 2) return "Leve"
                     if (severity <= 4) return "Moderado"
                     if (severity === 5) return "Severo"
-                    return "Crítico"
+                    return "Critico"
                   }
                   
                   const getSeverityDotColor = (severity: number) => {
@@ -547,7 +505,7 @@ export function PatientsTable({ patients, onSelectPatient, selectedPatientId }: 
                         <div className="flex flex-col items-center gap-0.5 cursor-help">
                           <span className={cn(
                             "inline-flex items-center justify-center w-7 h-7 rounded font-mono font-bold text-sm",
-                            symptomsCount === 0 ? "bg-muted text-muted-foreground" : getBadgeColor(maxSeverity)
+                            symptomsCount === 0 ? "bg-muted text-muted-foreground" : getSeverityBadgeColor(maxSeverity)
                           )}>
                             {symptomsCount}
                           </span>

@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import type { SymptomReport, SymptomCategory } from "@/lib/mock-data"
+import { getSeverityConfig } from "@/lib/severity-utils"
+import { SEVERITY_THRESHOLDS } from "@/lib/thresholds"
 import { AlertCircle, Stethoscope } from "lucide-react"
 import {
   Tooltip,
@@ -26,37 +28,11 @@ interface SymptomsListProps {
 // Category configuration with labels and order
 const categoryConfig: Record<SymptomCategory, { label: string; order: number }> = {
   gastrointestinal: { label: "Gastrointestinal", order: 1 },
-  neurologico: { label: "Neurológico", order: 2 },
-  metabolico: { label: "Metabólico", order: 3 },
-  psicologico: { label: "Psicológico", order: 4 },
+  neurologico: { label: "Neurologico", order: 2 },
+  metabolico: { label: "Metabolico", order: 3 },
+  psicologico: { label: "Psicologico", order: 4 },
   cardiovascular: { label: "Cardiovascular", order: 5 },
-  musculoesqueletico: { label: "Musculoesquelético", order: 6 },
-}
-
-// Severity configuration for 0-7 scale
-function getSeverityConfig(severity: number) {
-  if (severity <= 2) {
-    return { 
-      label: "Leve", 
-      bgColor: "bg-success/15", 
-      textColor: "text-success",
-      badgeColor: "bg-success text-success-foreground"
-    }
-  } else if (severity <= 5) {
-    return { 
-      label: "Moderado", 
-      bgColor: "bg-warning/15", 
-      textColor: "text-warning",
-      badgeColor: "bg-warning text-warning-foreground"
-    }
-  } else {
-    return { 
-      label: "Severo", 
-      bgColor: "bg-destructive/15", 
-      textColor: "text-destructive",
-      badgeColor: "bg-destructive text-destructive-foreground"
-    }
-  }
+  musculoesqueletico: { label: "Musculoesqueletico", order: 6 },
 }
 
 // Mini sparkline component for severity evolution
@@ -137,7 +113,7 @@ function SeveritySparkline({ history }: { history: { severity: number; date: str
                 r={2}
                 className={cn(
                   "fill-current",
-                  p.severity <= 2 ? "text-success" : p.severity <= 5 ? "text-warning" : "text-destructive"
+                  p.severity <= SEVERITY_THRESHOLDS.MILD_MAX ? "text-success" : p.severity <= SEVERITY_THRESHOLDS.MODERATE_MAX ? "text-warning" : "text-destructive"
                 )}
               />
             ))}
@@ -152,7 +128,7 @@ function SeveritySparkline({ history }: { history: { severity: number; date: str
                   <span className="text-muted-foreground">{h.date}</span>
                   <span className={cn(
                     "font-medium",
-                    h.severity <= 2 ? "text-success" : h.severity <= 5 ? "text-warning" : "text-destructive"
+                    h.severity <= SEVERITY_THRESHOLDS.MILD_MAX ? "text-success" : h.severity <= SEVERITY_THRESHOLDS.MODERATE_MAX ? "text-warning" : "text-destructive"
                   )}>
                     {h.severity}/7
                   </span>

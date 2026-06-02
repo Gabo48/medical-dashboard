@@ -41,6 +41,12 @@
   --chart-panel-bg: #DFE2E8;
   /* Grid colors */
   --chart-grid: #9ca3af;
+  /* Risk level colors for stacked bar charts */
+  --chart-risk-very-high: #dc6868;
+  --chart-risk-high: #e09560;
+  --chart-risk-moderate: #d4a84a;
+  --chart-risk-low: #9cb87a;
+  --chart-risk-very-low: #7aab7a;
   --radius: 0.625rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #1f293b;
@@ -94,6 +100,12 @@
   --chart-panel-bg: #1C2436;
   /* Grid colors */
   --chart-grid: #4b5563;
+  /* Risk level colors for stacked bar charts (dark mode) */
+  --chart-risk-very-high: #ef6b6b;
+  --chart-risk-high: #f0a06a;
+  --chart-risk-moderate: #e4b85a;
+  --chart-risk-low: #a0c87a;
+  --chart-risk-very-low: #80bb80;
   --sidebar: #1c2436;
   --sidebar-foreground: #f1f6fa;
   --sidebar-primary: #35b498;
@@ -143,6 +155,11 @@
   --color-chart-bmi: var(--chart-bmi);
   --color-chart-panel-bg: var(--chart-panel-bg);
   --color-chart-grid: var(--chart-grid);
+  --color-chart-risk-very-high: var(--chart-risk-very-high);
+  --color-chart-risk-high: var(--chart-risk-high);
+  --color-chart-risk-moderate: var(--chart-risk-moderate);
+  --color-chart-risk-low: var(--chart-risk-low);
+  --color-chart-risk-very-low: var(--chart-risk-very-low);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);

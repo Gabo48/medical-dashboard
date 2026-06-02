@@ -27,6 +27,7 @@ import { ClinicalMetricsSection } from "./clinical-metrics-section"
 import { ClinicalProfileTab } from "./clinical-profile-tab"
 import type { Patient } from "@/lib/mock-data"
 import { getPatientClinicalMetrics } from "@/lib/clinical-metrics-data"
+import { getMotivationDescription } from "@/lib/motivation-utils"
 import { 
   getWeightHistory, 
   getAdherenceHistory, 
@@ -73,23 +74,6 @@ import { cn } from "@/lib/utils"
 interface PatientDetailProps {
   patient: Patient
   onClose?: () => void
-}
-
-function getMotivationDescription(value: number): string {
-  switch (value) {
-    case 1:
-      return "El paciente no esta nada preparado para cambiar."
-    case 2:
-      return "El paciente esta pensando en cambiar, pero no ahora."
-    case 3:
-      return "El paciente quiere cambiar, pero no sabe como."
-    case 4:
-      return "El paciente se esta preparando para cambiar."
-    case 5:
-      return "El paciente esta tomando medidas activamente."
-    default:
-      return ""
-  }
 }
 
 export function PatientDetail({ patient, onClose }: PatientDetailProps) {
